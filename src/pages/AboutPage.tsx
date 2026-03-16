@@ -1,5 +1,6 @@
 import { useTranslation } from 'react-i18next';
 import { teamMembers } from '../data/team';
+import { assetUrl } from '../utils/assetUrl';
 
 export default function AboutPage() {
   const { t } = useTranslation();
@@ -15,7 +16,7 @@ export default function AboutPage() {
       {/* Hero */}
       <section className="relative h-[40vh] md:h-[50vh] flex items-center justify-center overflow-hidden">
         <img
-          src="/images/hero/hero-main.jpg"
+          src={assetUrl('images/hero/hero-main.jpg')}
           alt="About"
           className="absolute inset-0 w-full h-full object-cover"
         />

@@ -6,6 +6,7 @@ import DestinationCard from '../components/DestinationCard';
 import Carousel from '../components/Carousel';
 import { homepageDestinations, categories } from '../data/destinations';
 import { reviews } from '../data/reviews';
+import { assetUrl } from '../utils/assetUrl';
 
 export default function HomePage() {
   const { t } = useTranslation();
@@ -34,7 +35,7 @@ export default function HomePage() {
       {/* Hero */}
       <section className="relative h-[70vh] md:h-[85vh] flex items-center justify-center overflow-hidden">
         <img
-          src="/images/hero/hero-main.jpg"
+          src={assetUrl('images/hero/hero-main.jpg')}
           alt="Hero"
           className="absolute inset-0 w-full h-full object-cover"
         />
