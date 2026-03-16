@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TravelVista — 探索世界，发现美好</title>
+  <meta name="description" content="TravelVista 旅游目的地浏览网站，发现全球热门旅行目的地">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="assets/css/custom.css">
+</head>
+<body class="bg-sky-50 text-slate-800 font-sans">
+
+  <!-- 导航栏 -->
+  <nav class="bg-blue-800 text-white sticky top-0 z-50 shadow-md">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex items-center justify-between h-16">
+        <!-- Logo -->
+        <a href="index.html" class="text-2xl font-bold tracking-wide">
+          🌍 TravelVista
+        </a>
+        <!-- Desktop Nav -->
+        <div class="hidden md:flex items-center space-x-8">
+          <a href="index.html" class="hover:text-emerald-300 transition font-medium">首页</a>
+          <a href="destinations.html" class="hover:text-emerald-300 transition">目的地</a>
+          <a href="about.html" class="hover:text-emerald-300 transition">关于我们</a>
+          <a href="index-en.html" class="border border-white/40 rounded px-3 py-1 text-sm hover:bg-white/10 transition">EN</a>
+        </div>
+        <!-- Mobile Hamburger -->
+        <button id="menuBtn" class="md:hidden focus:outline-none" aria-label="菜单">
+          <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+          </svg>
+        </button>
+      </div>
+      <!-- Mobile Menu -->
+      <div id="mobileMenu" class="mobile-menu md:hidden pb-4">
+        <a href="index.html" class="block py-2 hover:text-emerald-300 font-medium">首页</a>
+        <a href="destinations.html" class="block py-2 hover:text-emerald-300">目的地</a>
+        <a href="about.html" class="block py-2 hover:text-emerald-300">关于我们</a>
+        <a href="index-en.html" class="inline-block mt-2 border border-white/40 rounded px-3 py-1 text-sm hover:bg-white/10">EN</a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Hero 区域 -->
+  <section class="relative h-[70vh] md:h-[85vh] flex items-center justify-center overflow-hidden">
+    <img src="assets/images/hero/hero-main.jpg" alt="热带海滩日落美景" class="absolute inset-0 w-full h-full object-cover">
+    <div class="hero-overlay absolute inset-0"></div>
+    <div class="relative z-10 text-center text-white px-4 max-w-3xl">
+      <h1 class="text-4xl md:text-6xl font-bold mb-4 leading-tight">探索世界，发现美好</h1>
+      <p class="text-lg md:text-xl mb-8 text-white/90">寻找你的下一个梦想旅行目的地</p>
+      <!-- 搜索框 -->
+      <div class="relative max-w-xl mx-auto">
+        <input
+          id="heroSearch"
+          type="text"
+          placeholder="搜索目的地..."
+          class="search-input w-full px-6 py-4 rounded-full text-slate-800 text-lg focus:outline-none shadow-lg"
+        >
+        <svg class="absolute right-5 top-1/2 -translate-y-1/2 w-6 h-6 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+        </svg>
+      </div>
+    </div>
+  </section>
+
+  <!-- 热门目的地 -->
+  <section id="destinations" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+    <h2 class="text-3xl md:text-4xl font-bold text-center text-blue-800 mb-4">热门目的地</h2>
+    <p class="text-center text-slate-500 mb-12 max-w-2xl mx-auto">精选全球最受欢迎的旅行目的地，开启你的探索之旅</p>
+
+    <div id="destinationGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+
+      <!-- Card 1 -->
+      <a href="destination-detail.html?id=bali" class="card-hover bg-white rounded-lg shadow-md overflow-hidden block" data-name="巴厘岛" data-desc="印度尼西亚海滩天堂">
+        <div class="aspect-16-10 overflow-hidden">
+          <img src="assets/images/destinations/bali.jpg" alt="巴厘岛海滩" class="w-full h-full object-cover">
+        </div>
+        <div class="p-4">
+          <h3 class="font-bold text-lg text-blue-800">巴厘岛</h3>
+          <p class="text-sm text-emerald-600 mb-1">印度尼西亚</p>
+          <p class="text-slate-500 text-sm line-clamp-2">热带天堂，拥有迷人海滩、梯田和寺庙</p>
+          <div class="mt-2 text-sm">
+            <span class="star-filled">★★★★</span><span class="star-empty">★</span>
+            <span class="text-slate-400 ml-1">4.7</span>
+          </div>
+        </div>
+      </a>
+
+      <!-- Card 2 -->
+      <a href="destination-detail.html?id=kyoto" class="card-hover bg-white rounded-lg shadow-md overflow-hidden block" data-name="京都" data-desc="日本古都文化">
+        <div class="aspect-16-10 overflow-hidden">
+          <img src="assets/images/destinations/kyoto.jpg" alt="京都金阁寺" class="w-full h-full object-cover">
+        </div>
+        <div class="p-4">
+          <h3 class="font-bold text-lg text-blue-800">京都</h3>
+          <p class="text-sm text-emerald-600 mb-1">日本</p>
+          <p class="text-slate-500 text-sm line-clamp-2">千年古都，体验禅意庭园与传统文化</p>
+          <div class="mt-2 text-sm">
+            <span class="star-filled">★★★★★</span>
+            <span class="text-slate-400 ml-1">4.9</span>
+          </div>
+        </div>
+      </a>
+
+      <!-- Card 3 -->
+      <a href="destination-detail.html?id=santorini" class="card-hover bg-white rounded-lg shadow-md overflow-hidden block" data-name="圣托里尼" data-desc="希腊爱琴海蓝白小镇">
+        <div class="aspect-16-10 overflow-hidden">
+          <img src="assets/images/destinations/santorini.jpg" alt="圣托里尼蓝顶教堂" class="w-full h-full object-cover">
+        </div>
+        <div class="p-4">
+          <h3 class="font-bold text-lg text-blue-800">圣托里尼</h3>
+          <p class="text-sm text-emerald-600 mb-1">希腊</p>
+          <p class="text-slate-500 text-sm line-clamp-2">爱琴海上的蓝白小镇，浪漫日落圣地</p>
+          <div class="mt-2 text-sm">
+            <span class="star-filled">★★★★★</span>
+            <span class="text-slate-400 ml-1">4.8</span>
+          </div>
+        </div>
+      </a>
+
+      <!-- Card 4 -->
+      <a href="destination-detail.html?id=paris" class="card-hover bg-white rounded-lg shadow-md overflow-hidden block" data-name="巴黎" data-desc="法国浪漫之都">
+        <div class="aspect-16-10 overflow-hidden">
+          <img src="assets/images/destinations/paris.jpg" alt="巴黎埃菲尔铁塔" class="w-full h-full object-cover">
+        </div>
+        <div class="p-4">
+          <h3 class="font-bold text-lg text-blue-800">巴黎</h3>
+          <p class="text-sm text-emerald-600 mb-1">法国</p>
+          <p class="text-slate-500 text-sm line-clamp-2">浪漫之都，艺术、美食与时尚的完美交融</p>
+          <div class="mt-2 text-sm">
+            <span class="star-filled">★★★★★</span>
+            <span class="text-slate-400 ml-1">4.8</span>
+          </div>
+        </div>
+      </a>
+
+      <!-- Card 5 -->
+      <a href="destination-detail.html?id=maldives" class="card-hover bg-white rounded-lg shadow-md overflow-hidden block" data-name="马尔代夫" data-desc="印度洋海岛度假">
+        <div class="aspect-16-10 overflow-hidden">
+          <img src="assets/images/destinations/maldives.jpg" alt="马尔代夫水上别墅" class="w-full h-full object-cover">
+        </div>
+        <div class="p-4">
+          <h3 class="font-bold text-lg text-blue-800">马尔代夫</h3>
+          <p class="text-sm text-emerald-600 mb-1">马尔代夫</p>
+          <p class="text-slate-500 text-sm line-clamp-2">碧蓝海水与水上别墅，极致海岛度假体验</p>
+          <div class="mt-2 text-sm">
+            <span class="star-filled">★★★★★</span>
+            <span class="text-slate-400 ml-1">4.9</span>
+          </div>
+        </div>
+      </a>
+
+      <!-- Card 6 -->
+      <a href="destination-detail.html?id=swiss" class="card-hover bg-white rounded-lg shadow-md overflow-hidden block" data-name="瑞士" data-desc="阿尔卑斯山雪山湖泊">
+        <div class="aspect-16-10 overflow-hidden">
+          <img src="assets/images/destinations/swiss.jpg" alt="瑞士阿尔卑斯山" class="w-full h-full object-cover">
+        </div>
+        <div class="p-4">
+          <h3 class="font-bold text-lg text-blue-800">瑞士</h3>
+          <p class="text-sm text-emerald-600 mb-1">瑞士</p>
+          <p class="text-slate-500 text-sm line-clamp-2">阿尔卑斯山的壮丽风光，湖光山色如画</p>
+          <div class="mt-2 text-sm">
+            <span class="star-filled">★★★★★</span>
+            <span class="text-slate-400 ml-1">4.9</span>
+          </div>
+        </div>
+      </a>
+
+      <!-- Card 7 -->
+      <a href="destination-detail.html?id=newyork" class="card-hover bg-white rounded-lg shadow-md overflow-hidden block" data-name="纽约" data-desc="美国大都市不夜城">
+        <div class="aspect-16-10 overflow-hidden">
+          <img src="assets/images/destinations/newyork.jpg" alt="纽约天际线" class="w-full h-full object-cover">
+        </div>
+        <div class="p-4">
+          <h3 class="font-bold text-lg text-blue-800">纽约</h3>
+          <p class="text-sm text-emerald-600 mb-1">美国</p>
+          <p class="text-slate-500 text-sm line-clamp-2">不夜城，感受世界之巅的繁华与活力</p>
+          <div class="mt-2 text-sm">
+            <span class="star-filled">★★★★</span><span class="star-empty">★</span>
+            <span class="text-slate-400 ml-1">4.6</span>
+          </div>
+        </div>
+      </a>
+
+      <!-- Card 8 -->
+      <a href="destination-detail.html?id=chengdu" class="card-hover bg-white rounded-lg shadow-md overflow-hidden block" data-name="成都" data-desc="中国美食熊猫之都">
+        <div class="aspect-16-10 overflow-hidden">
+          <img src="assets/images/destinations/chengdu.jpg" alt="成都大熊猫" class="w-full h-full object-cover">
+        </div>
+        <div class="p-4">
+          <h3 class="font-bold text-lg text-blue-800">成都</h3>
+          <p class="text-sm text-emerald-600 mb-1">中国</p>
+          <p class="text-slate-500 text-sm line-clamp-2">美食天堂与大熊猫故乡，悠闲慢生活</p>
+          <div class="mt-2 text-sm">
+            <span class="star-filled">★★★★★</span>
+            <span class="text-slate-400 ml-1">4.8</span>
+          </div>
+        </div>
+      </a>
+    </div>
+
+    <!-- 搜索无结果提示 -->
+    <div id="noResult" class="hidden text-center py-12 text-slate-400">
+      <svg class="w-16 h-16 mx-auto mb-4 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+      </svg>
+      <p class="text-lg">未找到匹配的目的地</p>
+      <p class="text-sm mt-1">请尝试其他关键词</p>
+    </div>
+  </section>
+
+  <!-- 分类导航 -->
+  <section class="bg-white py-16">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <h2 class="text-3xl md:text-4xl font-bold text-center text-blue-800 mb-4">探索旅行主题</h2>
+      <p class="text-center text-slate-500 mb-12">选择你喜欢的旅行方式</p>
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-6">
+        <a href="destinations.html?type=beach" class="group relative rounded-xl overflow-hidden aspect-square">
+          <img src="assets/images/categories/beach.jpg" alt="海滩度假" class="w-full h-full object-cover group-hover:scale-110 transition duration-500">
+          <div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
+          <div class="absolute bottom-4 left-4 text-white">
+            <p class="text-xl font-bold">🏖️ 海滩</p>
+            <p class="text-sm text-white/80">阳光与浪花</p>
+          </div>
+        </a>
+        <a href="destinations.html?type=mountain" class="group relative rounded-xl overflow-hidden aspect-square">
+          <img src="assets/images/categories/mountain.jpg" alt="山岳探险" class="w-full h-full object-cover group-hover:scale-110 transition duration-500">
+          <div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
+          <div class="absolute bottom-4 left-4 text-white">
+            <p class="text-xl font-bold">🏔️ 山岳</p>
+            <p class="text-sm text-white/80">壮丽山川</p>
+          </div>
+        </a>
+        <a href="destinations.html?type=city" class="group relative rounded-xl overflow-hidden aspect-square">
+          <img src="assets/images/categories/city.jpg" alt="城市漫游" class="w-full h-full object-cover group-hover:scale-110 transition duration-500">
+          <div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
+          <div class="absolute bottom-4 left-4 text-white">
+            <p class="text-xl font-bold">🏙️ 城市</p>
+            <p class="text-sm text-white/80">都市魅力</p>
+          </div>
+        </a>
+        <a href="destinations.html?type=culture" class="group relative rounded-xl overflow-hidden aspect-square">
+          <img src="assets/images/categories/culture.jpg" alt="文化体验" class="w-full h-full object-cover group-hover:scale-110 transition duration-500">
+          <div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
+          <div class="absolute bottom-4 left-4 text-white">
+            <p class="text-xl font-bold">🏛️ 文化</p>
+            <p class="text-sm text-white/80">历史与传承</p>
+          </div>
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- 用户评价 -->
+  <section class="py-16 bg-sky-50">
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+      <h2 class="text-3xl md:text-4xl font-bold text-center text-blue-800 mb-12">旅行者说</h2>
+      <div id="carousel" class="relative overflow-hidden">
+        <div class="carousel-track flex transition-transform duration-500">
+          <!-- Review 1 -->
+          <div class="carousel-item w-full flex-shrink-0 px-4">
+            <div class="bg-white rounded-xl shadow-md p-8 text-center">
+              <p class="text-lg text-slate-600 italic mb-6">"巴厘岛的海滩美得令人窒息，每个日落都是一幅画。TravelVista 帮我规划了完美的旅程！"</p>
+              <p class="font-bold text-blue-800">— 李小明</p>
+              <p class="text-sm text-slate-400">资深旅行爱好者</p>
+            </div>
+          </div>
+          <!-- Review 2 -->
+          <div class="carousel-item w-full flex-shrink-0 px-4">
+            <div class="bg-white rounded-xl shadow-md p-8 text-center">
+              <p class="text-lg text-slate-600 italic mb-6">"京都的秋天，红叶映衬着古老的寺庙，仿佛穿越了时空。强烈推荐！"</p>
+              <p class="font-bold text-blue-800">— 王芳</p>
+              <p class="text-sm text-slate-400">摄影师</p>
+            </div>
+          </div>
+          <!-- Review 3 -->
+          <div class="carousel-item w-full flex-shrink-0 px-4">
+            <div class="bg-white rounded-xl shadow-md p-8 text-center">
+              <p class="text-lg text-slate-600 italic mb-6">"圣托里尼的蓝与白，是我见过最美的色彩搭配。这里的一切都像明信片一样。"</p>
+              <p class="font-bold text-blue-800">— 张伟</p>
+              <p class="text-sm text-slate-400">自由行达人</p>
+            </div>
+          </div>
+        </div>
+        <!-- Carousel indicators -->
+        <div class="flex justify-center mt-6 space-x-2">
+          <button class="carousel-dot w-3 h-3 rounded-full bg-blue-800" data-index="0" aria-label="评价1"></button>
+          <button class="carousel-dot w-3 h-3 rounded-full bg-blue-300" data-index="1" aria-label="评价2"></button>
+          <button class="carousel-dot w-3 h-3 rounded-full bg-blue-300" data-index="2" aria-label="评价3"></button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 页脚 -->
+  <footer class="bg-blue-900 text-white py-12">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+        <div>
+          <h3 class="text-xl font-bold mb-4">🌍 TravelVista</h3>
+          <p class="text-blue-200 text-sm">探索世界，发现美好。<br>你的旅程，从这里开始。</p>
+        </div>
+        <div>
+          <h4 class="font-bold mb-4">快速链接</h4>
+          <ul class="space-y-2 text-sm text-blue-200">
+            <li><a href="index.html" class="hover:text-emerald-300 transition">首页</a></li>
+            <li><a href="destinations.html" class="hover:text-emerald-300 transition">目的地</a></li>
+            <li><a href="about.html" class="hover:text-emerald-300 transition">关于我们</a></li>
+          </ul>
+        </div>
+        <div>
+          <h4 class="font-bold mb-4">关注我们</h4>
+          <div class="flex space-x-4 text-blue-200">
+            <a href="#" class="hover:text-emerald-300 transition" aria-label="微博">
+              <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M10.1 18.3c-3.6.4-6.7-1.3-6.9-3.7-.2-2.4 2.6-4.7 6.2-5.1 3.6-.4 6.7 1.3 6.9 3.7.2 2.5-2.6 4.7-6.2 5.1zm8.4-12.2c-.5-1.6-2.1-2.5-3.5-2.1-.4.1-.6.5-.5.9.1.4.5.6.9.5.7-.2 1.5.3 1.8 1.1.3.8 0 1.7-.7 2-.4.1-.6.5-.5.9.1.4.5.6.9.5 1.4-.5 2.1-2.2 1.6-3.8z"/></svg>
+            </a>
+            <a href="#" class="hover:text-emerald-300 transition" aria-label="微信">
+              <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M8.5 13.5a1 1 0 110-2 1 1 0 010 2zm5 0a1 1 0 110-2 1 1 0 010 2zM12 2C6.48 2 2 6.03 2 11c0 2.76 1.36 5.22 3.48 6.87L5 22l4.33-2.33c.86.22 1.76.33 2.67.33 5.52 0 10-4.03 10-9S17.52 2 12 2z"/></svg>
+            </a>
+            <a href="#" class="hover:text-emerald-300 transition" aria-label="Instagram">
+              <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"/></svg>
+            </a>
+          </div>
+        </div>
+      </div>
+      <div class="border-t border-blue-700 mt-8 pt-6 text-center text-sm text-blue-300">
+        <p>&copy; 2026 TravelVista. 保留所有权利。</p>
+      </div>
+    </div>
+  </footer>
+
+  <script src="js/main.js"></script>
+  <script src="js/search.js"></script>
+</body>
+</html>
