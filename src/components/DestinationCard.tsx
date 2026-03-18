@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import type { Destination } from '../types';
+import FavoriteButton from './FavoriteButton';
 
 interface Props {
   destination: Destination;
@@ -14,13 +15,16 @@ export default function DestinationCard({ destination }: Props) {
       to={`/destinations/${destination.id}`}
       className="card-hover bg-white rounded-lg shadow-md overflow-hidden block"
     >
-      <div className="aspect-16-10 overflow-hidden">
+      <div className="aspect-16-10 overflow-hidden relative">
         <img
           src={destination.image}
           alt={t(destination.nameKey)}
           className="w-full h-full object-cover"
           loading="lazy"
         />
+        <div className="absolute top-2 right-2">
+          <FavoriteButton destinationId={destination.id} />
+        </div>
       </div>
       <div className="p-4">
         <span className="text-xs bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full">

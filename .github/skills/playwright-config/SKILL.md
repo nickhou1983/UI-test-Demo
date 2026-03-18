@@ -10,6 +10,10 @@ description: >-
 
 # Playwright Configuration Generation
 
+## ⚠️ Report-Only Policy
+
+When configuration issues are detected (missing files, incorrect settings, version mismatches), report the issue with suggested fixes but do NOT automatically modify configuration files unless the tester explicitly requests it.
+
 ## Generate playwright.config.ts
 
 Adapt based on discovered project settings from Module B:
@@ -84,6 +88,41 @@ blob-report/
 .playwright/
 ```
 
+## Argos CI Reporter Configuration (Optional)
+
+When the project uses Argos CI for PR visual review, add the Argos reporter alongside existing reporters.
+
+**In `playwright.config.ts`:**
+```typescript
+reporter: [
+  ['html', { open: 'never' }],
+  ['@argos-ci/playwright/reporter'],
+],
+```
+
+**In `playwright.service.config.ts` (Azure PT):**
+```typescript
+reporter: [
+  ['list'],
+  ['html', { open: 'never' }],
+  ['@azure/playwright/reporter'],
+  ['@argos-ci/playwright/reporter'],
+],
+```
+
+**Note:** The Argos reporter requires `ARGOS_TOKEN` environment variable to upload screenshots. Without it, the reporter silently skips — no impact on local test execution.
+
+Additional npm scripts for Argos workflows:
+```json
+{
+  "scripts": {
+    "test:azure": "playwright test --config=playwright.service.config.ts",
+    "test:azure:e2e": "playwright test --config=playwright.service.config.ts --project=e2e",
+    "test:azure:visual": "playwright test --config=playwright.service.config.ts --project=visual"
+  }
+}
+```
+
 ## Generate playwright.service.config.ts (Azure PT)
 
 When user wants Azure Playwright Workspace integration, generate `playwright.service.config.ts`.
@@ -94,15 +133,20 @@ Alternatively, manually create:
 
 ```typescript
 import { defineConfig } from '@playwright/test';
-import { getServiceConfig, ServiceOS } from '@azure/playwright';
+import { createAzurePlaywrightConfig, ServiceOS } from '@azure/playwright';
+import { DefaultAzureCredential } from '@azure/identity';
+import { existsSync } from 'fs';
 import baseConfig from './playwright.config';
+
+if (existsSync('.env')) process.loadEnvFile('.env');
 
 export default defineConfig(
   baseConfig,
-  getServiceConfig(baseConfig, {
+  createAzurePlaywrightConfig(baseConfig, {
     exposeNetwork: '<loopback>',
-    timeout: 30000,
+    connectTimeout: 30000,
     os: ServiceOS.LINUX,
+    credential: new DefaultAzureCredential(),
   }),
   {
     retries: process.env.CI ? 2 : 0,
@@ -117,6 +161,9 @@ export default defineConfig(
 ```
 
 **Key points:**
+- Requires `npm install -D @azure/playwright @azure/identity`
+- `process.loadEnvFile('.env')` loads PLAYWRIGHT_SERVICE_URL without extra dependencies
+- `DefaultAzureCredential()` authenticates via `az login` (Entra ID) — recommended over Access Tokens
 - Inherits all projects (e2e, visual) and webServer from base config
 - `exposeNetwork: '<loopback>'` allows cloud browsers to reach the local/CI dev server
 - `ServiceOS.LINUX` ensures consistent environment for visual baselines

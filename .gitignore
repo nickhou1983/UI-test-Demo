@@ -21,3 +21,11 @@ test-results/
 playwright-report/
 blob-report/
 .playwright/
+vlm-review-report.json
+
+# Environment variables
+.env
+.env.*
+
+# Office temp files
+~\

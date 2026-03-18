@@ -2,6 +2,8 @@ import { useParams, Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { getDestinationDetail, destinations } from '../data/destinations';
 import DestinationCard from '../components/DestinationCard';
+import FavoriteButton from '../components/FavoriteButton';
+import WeatherWidget from '../components/WeatherWidget';
 
 export default function DestinationDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -59,7 +61,10 @@ export default function DestinationDetailPage() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Main */}
           <div className="lg:col-span-2">
-            <h1 className="text-3xl md:text-4xl font-bold text-blue-800 mb-2">{t(detail.nameKey)}</h1>
+            <div className="flex items-center gap-3 mb-2">
+              <h1 className="text-3xl md:text-4xl font-bold text-blue-800">{t(detail.nameKey)}</h1>
+              <FavoriteButton destinationId={detail.id} className="mt-1" />
+            </div>
             <p className="text-emerald-600 text-lg mb-6">📍 {t(detail.countryKey)}</p>
             <p className="text-slate-600 leading-relaxed mb-10">{t(detail.descKey)}</p>
 
@@ -76,6 +81,29 @@ export default function DestinationDetailPage() {
                 </div>
               ))}
             </div>
+
+            {/* Reviews */}
+            {detail.reviews && detail.reviews.length > 0 && (
+              <>
+                <h2 className="text-2xl font-bold text-blue-800 mb-6">{t('detail.reviews')}</h2>
+                <div className="space-y-4 mb-10">
+                  {detail.reviews.map((review) => (
+                    <div key={review.contentKey} className="bg-white rounded-xl shadow-md p-5">
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="font-bold text-blue-800">{t(review.authorKey)}</span>
+                        <span className="text-slate-400 text-sm">{t(review.dateKey)}</span>
+                      </div>
+                      <div className="flex items-center space-x-1 text-sm mb-2">
+                        {Array.from({ length: 5 }, (_, i) => (
+                          <span key={i} className={i < review.rating ? 'star-filled' : 'star-empty'}>★</span>
+                        ))}
+                      </div>
+                      <p className="text-slate-600 text-sm leading-relaxed">{t(review.contentKey)}</p>
+                    </div>
+                  ))}
+                </div>
+              </>
+            )}
           </div>
 
           {/* Sidebar */}
@@ -99,6 +127,9 @@ export default function DestinationDetailPage() {
               </div>
             </div>
 
+            {/* Weather Widget */}
+            <WeatherWidget destinationId={detail.id} />
+
             {/* Practical info */}
             <div className="bg-white rounded-xl shadow-md p-6">
               <h3 className="font-bold text-blue-800 text-lg mb-4">{t('detail.practical')}</h3>
@@ -110,6 +141,13 @@ export default function DestinationDetailPage() {
                 <div><span className="text-slate-500">🗣️ {t('detail.language')}：</span><span className="text-slate-700">{t(detail.language)}</span></div>
               </div>
             </div>
+
+            <Link
+              to={`/trips?dest=${detail.id}`}
+              className="block text-center bg-blue-700 hover:bg-blue-800 text-white py-3 rounded-lg transition"
+            >
+              📋 {t('trip.planTrip')}
+            </Link>
 
             <Link
               to="/destinations"

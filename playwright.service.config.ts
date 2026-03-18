@@ -1,25 +1,30 @@
 import { defineConfig } from '@playwright/test';
-import { getServiceConfig, ServiceOS } from '@azure/playwright';
+import { createAzurePlaywrightConfig, ServiceOS } from '@azure/playwright';
+import { DefaultAzureCredential } from '@azure/identity';
+import { existsSync } from 'fs';
 import baseConfig from './playwright.config';
+
+if (existsSync('.env')) process.loadEnvFile('.env');
 
 /**
  * Playwright service config for Azure App Testing — Playwright Workspace.
  * Inherits all settings from playwright.config.ts and adds Azure cloud connection.
  *
  * Prerequisites:
- * - npm install -D @azure/playwright
+ * - npm install -D @azure/playwright @azure/identity
  * - Set PLAYWRIGHT_SERVICE_URL env var (or .env file)
- * - Authenticate via `az login` (Entra ID) or set PLAYWRIGHT_SERVICE_ACCESS_TOKEN
+ * - Authenticate via `az login` (Entra ID)
  *
  * Usage:
  *   npx playwright test --config=playwright.service.config.ts
  */
 export default defineConfig(
   baseConfig,
-  getServiceConfig(baseConfig, {
+  createAzurePlaywrightConfig(baseConfig, {
     exposeNetwork: '<loopback>',
-    timeout: 30000,
+    connectTimeout: 30000,
     os: ServiceOS.LINUX,
+    credential: new DefaultAzureCredential(),
   }),
   {
     retries: process.env.CI ? 2 : 0,
@@ -28,6 +33,7 @@ export default defineConfig(
       ['list'],
       ['html', { open: 'never' }],
       ['@azure/playwright/reporter'],
+      ['@argos-ci/playwright/reporter'],
     ],
   }
 );

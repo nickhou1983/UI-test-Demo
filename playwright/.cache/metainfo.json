@@ -1,0 +1,407 @@
+{
+  "version": "1.58.2",
+  "viteVersion": "6.4.1",
+  "registerSourceHash": "ea233d95b980072c81eb49458aee55f5d33fdb02",
+  "components": [
+    {
+      "id": "_Users_qifenghou_Codes_UI_test_Demo_src_components_Carousel",
+      "filename": "/Users/qifenghou/Codes/UI-test-Demo/tests/component/Carousel.spec.tsx",
+      "importSource": "../../src/components/Carousel"
+    },
+    {
+      "id": "_Users_qifenghou_Codes_UI_test_Demo_src_components_DestinationCard",
+      "filename": "/Users/qifenghou/Codes/UI-test-Demo/tests/component/DestinationCard.spec.tsx",
+      "importSource": "../../src/components/DestinationCard"
+    },
+    {
+      "id": "_Users_qifenghou_Codes_UI_test_Demo_tests_fixtures_test_utils_TestWrapper",
+      "filename": "/Users/qifenghou/Codes/UI-test-Demo/tests/component/SearchBar.spec.tsx",
+      "importSource": "../fixtures/test-utils",
+      "remoteName": "TestWrapper"
+    },
+    {
+      "id": "_Users_qifenghou_Codes_UI_test_Demo_src_components_FilterBar",
+      "filename": "/Users/qifenghou/Codes/UI-test-Demo/tests/component/FilterBar.spec.tsx",
+      "importSource": "../../src/components/FilterBar"
+    },
+    {
+      "id": "_Users_qifenghou_Codes_UI_test_Demo_src_components_Footer",
+      "filename": "/Users/qifenghou/Codes/UI-test-Demo/tests/component/Footer.spec.tsx",
+      "importSource": "../../src/components/Footer"
+    },
+    {
+      "id": "_Users_qifenghou_Codes_UI_test_Demo_src_components_Navbar",
+      "filename": "/Users/qifenghou/Codes/UI-test-Demo/tests/component/Navbar.spec.tsx",
+      "importSource": "../../src/components/Navbar"
+    },
+    {
+      "id": "_Users_qifenghou_Codes_UI_test_Demo_src_components_SearchBar",
+      "filename": "/Users/qifenghou/Codes/UI-test-Demo/tests/component/SearchBar.spec.tsx",
+      "importSource": "../../src/components/SearchBar"
+    }
+  ],
+  "sources": {
+    "/Users/qifenghou/Codes/UI-test-Demo/playwright/index.html": {
+      "timestamp": 1773809060464.3606
+    },
+    "/Users/qifenghou/Codes/UI-test-Demo/playwright/index.tsx": {
+      "timestamp": 1773809062436.941
+    },
+    "/Users/qifenghou/Codes/UI-test-Demo/node_modules/react-dom/client.js": {
+      "timestamp": 1773667299625.7534
+    },
+    "/Users/qifenghou/Codes/UI-test-Demo/node_modules/react/index.js": {
+      "timestamp": 1773667299629.807
+    },
+    "/Users/qifenghou/Codes/UI-test-Demo/src/components/Carousel.tsx": {
+      "timestamp": 1773668625279.8618
+    },
+    "/Users/qifenghou/Codes/UI-test-Demo/src/components/FilterBar.tsx": {
+      "timestamp": 1773668625279.8667
+    },
+    "/Users/qifenghou/Codes/UI-test-Demo/src/components/SearchBar.tsx": {
+      "timestamp": 1773668625279.847
+    },
+    "/Users/qifenghou/Codes/UI-test-Demo/src/i18n/index.ts": {
+      "timestamp": 1773668625279.8225
+    },
+    "/Users/qifenghou/Codes/UI-test-Demo/src/components/Footer.tsx": {
+      "timestamp": 1773668625279.83
+    },
+    "/Users/qifenghou/Codes/UI-test-Demo/src/components/DestinationCard.tsx": {
+      "timestamp": 1773668625279.8535
+    },
+    "/Users/qifenghou/Codes/UI-test-Demo/src/components/Navbar.tsx": {
+      "timestamp": 1773668625279.8376
+    },
+    "/Users/qifenghou/Codes/UI-test-Demo/tests/fixtures/test-utils.tsx": {
+      "timestamp": 1773808921106.1826
+    },
+    "/Users/qifenghou/Codes/UI-test-Demo/node_modules/react/jsx-runtime.js": {
+      "timestamp": 1773667299640.1052
+    },
+    "/Users/qifenghou/Codes/UI-test-Demo/node_modules/react/cjs/react.production.js": {
+      "timestamp": 1773667299693.994
+    },
+    "/Users/qifenghou/Codes/UI-test-Demo/node_modules/react-i18next/dist/es/index.js": {
+      "timestamp": 1773667299706.6782
+    },
+    "/Users/qifenghou/Codes/UI-test-Demo/node_modules/i18next/dist/esm/i18next.js": {
+      "timestamp": 1773667299681.6555
+    },
+    "/Users/qifenghou/Codes/UI-test-Demo/node_modules/react-router-dom/dist/index.mjs": {
+      "timestamp": 1773667299637.0564
+    },
+    "/Users/qifenghou/Codes/UI-test-Demo/src/i18n/zh.json": {
+      "timestamp": 1773668625279.807
+    },
+    "/Users/qifenghou/Codes/UI-test-Demo/src/i18n/en.json": {
+      "timestamp": 1773668625279.8145
+    },
+    "/Users/qifenghou/Codes/UI-test-Demo/node_modules/react-dom/cjs/react-dom-client.production.js": {
+      "timestamp": 1773667299750.68
+    },
+    "/Users/qifenghou/Codes/UI-test-Demo/node_modules/react/cjs/react-jsx-runtime.production.js": {
+      "timestamp": 1773667299677.7048
+    },
+    "/Users/qifenghou/Codes/UI-test-Demo/node_modules/react-i18next/dist/es/IcuTrans.js": {
+      "timestamp": 1773667299694.765
+    },
+    "/Users/qifenghou/Codes/UI-test-Demo/node_modules/react-i18next/dist/es/useTranslation.js": {
+      "timestamp": 1773667299767.1643
+    },
+    "/Users/qifenghou/Codes/UI-test-Demo/node_modules/react-i18next/dist/es/Trans.js": {
+      "timestamp": 1773667299753.5527
+    },
+    "/Users/qifenghou/Codes/UI-test-Demo/node_modules/react-i18next/dist/es/TransWithoutContext.js": {
+      "timestamp": 1773667299760.0366
+    },
+    "/Users/qifenghou/Codes/UI-test-Demo/node_modules/react-i18next/dist/es/withTranslation.js": {
+      "timestamp": 1773667299770.8508
+    },
+    "/Users/qifenghou/Codes/UI-test-Demo/node_modules/react-i18next/dist/es/I18nextProvider.js": {
+      "timestamp": 1773667299682.8967
+    },
+    "/Users/qifenghou/Codes/UI-test-Demo/node_modules/react-i18next/dist/es/initReactI18next.js": {
+      "timestamp": 1773667299710.4841
+    },
+    "/Users/qifenghou/Codes/UI-test-Demo/node_modules/react-i18next/dist/es/Translation.js": {
+      "timestamp": 1773667299755.1301
+    },
+    "/Users/qifenghou/Codes/UI-test-Demo/node_modules/react-i18next/dist/es/withSSR.js": {
+      "timestamp": 1773667299769.5588
+    },
+    "/Users/qifenghou/Codes/UI-test-Demo/node_modules/react-i18next/dist/es/defaults.js": {
+      "timestamp": 1773667299662.882
+    },
+    "/Users/qifenghou/Codes/UI-test-Demo/node_modules/react-i18next/dist/es/i18nInstance.js": {
+      "timestamp": 1773667299687.9573
+    },
+    "/Users/qifenghou/Codes/UI-test-Demo/node_modules/react-i18next/dist/es/useSSR.js": {
+      "timestamp": 1773667299765.5188
+    },
+    "/Users/qifenghou/Codes/UI-test-Demo/node_modules/react-i18next/dist/es/IcuTransWithoutContext.js": {
+      "timestamp": 1773667299699.6987
+    },
+    "/Users/qifenghou/Codes/UI-test-Demo/node_modules/scheduler/index.js": {
+      "timestamp": 1773667299622.243
+    },
+    "/Users/qifenghou/Codes/UI-test-Demo/node_modules/react-i18next/dist/es/context.js": {
+      "timestamp": 1773667299654.685
+    },
+    "/Users/qifenghou/Codes/UI-test-Demo/node_modules/react-dom/index.js": {
+      "timestamp": 1773667299633.4797
+    },
+    "/Users/qifenghou/Codes/UI-test-Demo/node_modules/react-router/dist/development/dom-export.mjs": {
+      "timestamp": 1773667299794.3843
+    },
+    "/Users/qifenghou/Codes/UI-test-Demo/src/index.css": {
+      "timestamp": 1773668625279.7646
+    },
+    "/Users/qifenghou/Codes/UI-test-Demo/node_modules/react-router/dist/development/index.mjs": {
+      "timestamp": 1773667299801.79
+    },
+    "/Users/qifenghou/Codes/UI-test-Demo/node_modules/use-sync-external-store/shim/index.js": {
+      "timestamp": 1773667299631.0059
+    },
+    "/Users/qifenghou/Codes/UI-test-Demo/node_modules/react-i18next/dist/es/utils.js": {
+      "timestamp": 1773667299768.7144
+    },
+    "/Users/qifenghou/Codes/UI-test-Demo/node_modules/react-i18next/dist/es/unescape.js": {
+      "timestamp": 1773667299763.7876
+    },
+    "/Users/qifenghou/Codes/UI-test-Demo/node_modules/html-parse-stringify/dist/html-parse-stringify.module.js": {
+      "timestamp": 1773667299631.3223
+    },
+    "/Users/qifenghou/Codes/UI-test-Demo/node_modules/react-i18next/dist/es/IcuTransUtils/index.js": {
+      "timestamp": 1773667299705.3213
+    },
+    "/Users/qifenghou/Codes/UI-test-Demo/node_modules/react-router/dist/development/chunk-LFPYN7LY.mjs": {
+      "timestamp": 1773667299770.0667
+    },
+    "/Users/qifenghou/Codes/UI-test-Demo/node_modules/react-dom/cjs/react-dom.production.js": {
+      "timestamp": 1773667299877.8323
+    },
+    "/Users/qifenghou/Codes/UI-test-Demo/node_modules/scheduler/cjs/scheduler.production.js": {
+      "timestamp": 1773667299672.2664
+    },
+    "/Users/qifenghou/Codes/UI-test-Demo/node_modules/react-router/dist/development/chunk-JPUPSTYD.mjs": {
+      "timestamp": 1773667299759.099
+    },
+    "/Users/qifenghou/Codes/UI-test-Demo/node_modules/react-i18next/dist/es/IcuTransUtils/htmlEntityDecoder.js": {
+      "timestamp": 1773667299677.6978
+    },
+    "/Users/qifenghou/Codes/UI-test-Demo/node_modules/react-i18next/dist/es/IcuTransUtils/TranslationParserError.js": {
+      "timestamp": 1773667299757.1042
+    },
+    "/Users/qifenghou/Codes/UI-test-Demo/node_modules/react-i18next/dist/es/IcuTransUtils/renderTranslation.js": {
+      "timestamp": 1773667299750.1013
+    },
+    "/Users/qifenghou/Codes/UI-test-Demo/node_modules/react-i18next/dist/es/IcuTransUtils/tokenizer.js": {
+      "timestamp": 1773667299751.7847
+    },
+    "/Users/qifenghou/Codes/UI-test-Demo/node_modules/void-elements/index.js": {
+      "timestamp": 1773667299630.796
+    },
+    "/Users/qifenghou/Codes/UI-test-Demo/node_modules/use-sync-external-store/cjs/use-sync-external-store-shim.production.js": {
+      "timestamp": 1773667299650.0085
+    },
+    "/Users/qifenghou/Codes/UI-test-Demo/node_modules/cookie/dist/index.js": {
+      "timestamp": 1773667299626.785
+    },
+    "/Users/qifenghou/Codes/UI-test-Demo/node_modules/set-cookie-parser/lib/set-cookie.js": {
+      "timestamp": 1773667299626.803
+    }
+  },
+  "deps": {
+    "/Users/qifenghou/Codes/UI-test-Demo/src/components/Carousel.tsx": [
+      "/Users/qifenghou/Codes/UI-test-Demo/src/components/Carousel.tsx"
+    ],
+    "/Users/qifenghou/Codes/UI-test-Demo/src/components/DestinationCard.tsx": [
+      "/Users/qifenghou/Codes/UI-test-Demo/src/components/DestinationCard.tsx",
+      "/Users/qifenghou/Codes/UI-test-Demo/node_modules/react-router-dom/dist/index.mjs",
+      "/Users/qifenghou/Codes/UI-test-Demo/node_modules/react-router/dist/development/dom-export.mjs",
+      "/Users/qifenghou/Codes/UI-test-Demo/node_modules/react-router/dist/development/chunk-JPUPSTYD.mjs",
+      "/Users/qifenghou/Codes/UI-test-Demo/node_modules/react-router/dist/development/chunk-LFPYN7LY.mjs",
+      "/Users/qifenghou/Codes/UI-test-Demo/node_modules/react-router/dist/development/index.mjs",
+      "/Users/qifenghou/Codes/UI-test-Demo/node_modules/react-i18next/dist/es/index.js",
+      "/Users/qifenghou/Codes/UI-test-Demo/node_modules/react-i18next/dist/es/Trans.js",
+      "/Users/qifenghou/Codes/UI-test-Demo/node_modules/react-i18next/dist/es/TransWithoutContext.js",
+      "/Users/qifenghou/Codes/UI-test-Demo/node_modules/i18next/dist/esm/i18next.js",
+      "/Users/qifenghou/Codes/UI-test-Demo/node_modules/html-parse-stringify/dist/html-parse-stringify.module.js",
+      "/Users/qifenghou/Codes/UI-test-Demo/node_modules/react-i18next/dist/es/utils.js",
+      "/Users/qifenghou/Codes/UI-test-Demo/node_modules/react-i18next/dist/es/defaults.js",
+      "/Users/qifenghou/Codes/UI-test-Demo/node_modules/react-i18next/dist/es/unescape.js",
+      "/Users/qifenghou/Codes/UI-test-Demo/node_modules/react-i18next/dist/es/i18nInstance.js",
+      "/Users/qifenghou/Codes/UI-test-Demo/node_modules/react-i18next/dist/es/context.js",
+      "/Users/qifenghou/Codes/UI-test-Demo/node_modules/react-i18next/dist/es/initReactI18next.js",
+      "/Users/qifenghou/Codes/UI-test-Demo/node_modules/react-i18next/dist/es/IcuTrans.js",
+      "/Users/qifenghou/Codes/UI-test-Demo/node_modules/react-i18next/dist/es/IcuTransWithoutContext.js",
+      "/Users/qifenghou/Codes/UI-test-Demo/node_modules/react-i18next/dist/es/IcuTransUtils/index.js",
+      "/Users/qifenghou/Codes/UI-test-Demo/node_modules/react-i18next/dist/es/IcuTransUtils/TranslationParserError.js",
+      "/Users/qifenghou/Codes/UI-test-Demo/node_modules/react-i18next/dist/es/IcuTransUtils/htmlEntityDecoder.js",
+      "/Users/qifenghou/Codes/UI-test-Demo/node_modules/react-i18next/dist/es/IcuTransUtils/tokenizer.js",
+      "/Users/qifenghou/Codes/UI-test-Demo/node_modules/react-i18next/dist/es/IcuTransUtils/renderTranslation.js",
+      "/Users/qifenghou/Codes/UI-test-Demo/node_modules/react-i18next/dist/es/useTranslation.js",
+      "/Users/qifenghou/Codes/UI-test-Demo/node_modules/react-i18next/dist/es/withTranslation.js",
+      "/Users/qifenghou/Codes/UI-test-Demo/node_modules/react-i18next/dist/es/Translation.js",
+      "/Users/qifenghou/Codes/UI-test-Demo/node_modules/react-i18next/dist/es/I18nextProvider.js",
+      "/Users/qifenghou/Codes/UI-test-Demo/node_modules/react-i18next/dist/es/withSSR.js",
+      "/Users/qifenghou/Codes/UI-test-Demo/node_modules/react-i18next/dist/es/useSSR.js"
+    ],
+    "/Users/qifenghou/Codes/UI-test-Demo/tests/fixtures/test-utils.tsx": [
+      "/Users/qifenghou/Codes/UI-test-Demo/tests/fixtures/test-utils.tsx",
+      "/Users/qifenghou/Codes/UI-test-Demo/node_modules/react-router-dom/dist/index.mjs",
+      "/Users/qifenghou/Codes/UI-test-Demo/node_modules/react-router/dist/development/dom-export.mjs",
+      "/Users/qifenghou/Codes/UI-test-Demo/node_modules/react-router/dist/development/chunk-JPUPSTYD.mjs",
+      "/Users/qifenghou/Codes/UI-test-Demo/node_modules/react-router/dist/development/chunk-LFPYN7LY.mjs",
+      "/Users/qifenghou/Codes/UI-test-Demo/node_modules/react-router/dist/development/index.mjs",
+      "/Users/qifenghou/Codes/UI-test-Demo/node_modules/react-i18next/dist/es/index.js",
+      "/Users/qifenghou/Codes/UI-test-Demo/node_modules/react-i18next/dist/es/Trans.js",
+      "/Users/qifenghou/Codes/UI-test-Demo/node_modules/react-i18next/dist/es/TransWithoutContext.js",
+      "/Users/qifenghou/Codes/UI-test-Demo/node_modules/i18next/dist/esm/i18next.js",
+      "/Users/qifenghou/Codes/UI-test-Demo/node_modules/html-parse-stringify/dist/html-parse-stringify.module.js",
+      "/Users/qifenghou/Codes/UI-test-Demo/node_modules/react-i18next/dist/es/utils.js",
+      "/Users/qifenghou/Codes/UI-test-Demo/node_modules/react-i18next/dist/es/defaults.js",
+      "/Users/qifenghou/Codes/UI-test-Demo/node_modules/react-i18next/dist/es/unescape.js",
+      "/Users/qifenghou/Codes/UI-test-Demo/node_modules/react-i18next/dist/es/i18nInstance.js",
+      "/Users/qifenghou/Codes/UI-test-Demo/node_modules/react-i18next/dist/es/context.js",
+      "/Users/qifenghou/Codes/UI-test-Demo/node_modules/react-i18next/dist/es/initReactI18next.js",
+      "/Users/qifenghou/Codes/UI-test-Demo/node_modules/react-i18next/dist/es/IcuTrans.js",
+      "/Users/qifenghou/Codes/UI-test-Demo/node_modules/react-i18next/dist/es/IcuTransWithoutContext.js",
+      "/Users/qifenghou/Codes/UI-test-Demo/node_modules/react-i18next/dist/es/IcuTransUtils/index.js",
+      "/Users/qifenghou/Codes/UI-test-Demo/node_modules/react-i18next/dist/es/IcuTransUtils/TranslationParserError.js",
+      "/Users/qifenghou/Codes/UI-test-Demo/node_modules/react-i18next/dist/es/IcuTransUtils/htmlEntityDecoder.js",
+      "/Users/qifenghou/Codes/UI-test-Demo/node_modules/react-i18next/dist/es/IcuTransUtils/tokenizer.js",
+      "/Users/qifenghou/Codes/UI-test-Demo/node_modules/react-i18next/dist/es/IcuTransUtils/renderTranslation.js",
+      "/Users/qifenghou/Codes/UI-test-Demo/node_modules/react-i18next/dist/es/useTranslation.js",
+      "/Users/qifenghou/Codes/UI-test-Demo/node_modules/react-i18next/dist/es/withTranslation.js",
+      "/Users/qifenghou/Codes/UI-test-Demo/node_modules/react-i18next/dist/es/Translation.js",
+      "/Users/qifenghou/Codes/UI-test-Demo/node_modules/react-i18next/dist/es/I18nextProvider.js",
+      "/Users/qifenghou/Codes/UI-test-Demo/node_modules/react-i18next/dist/es/withSSR.js",
+      "/Users/qifenghou/Codes/UI-test-Demo/node_modules/react-i18next/dist/es/useSSR.js",
+      "/Users/qifenghou/Codes/UI-test-Demo/src/i18n/index.ts",
+      "/Users/qifenghou/Codes/UI-test-Demo/src/i18n/zh.json",
+      "/Users/qifenghou/Codes/UI-test-Demo/src/i18n/en.json"
+    ],
+    "/Users/qifenghou/Codes/UI-test-Demo/src/components/FilterBar.tsx": [
+      "/Users/qifenghou/Codes/UI-test-Demo/src/components/FilterBar.tsx",
+      "/Users/qifenghou/Codes/UI-test-Demo/node_modules/react-i18next/dist/es/index.js",
+      "/Users/qifenghou/Codes/UI-test-Demo/node_modules/react-i18next/dist/es/Trans.js",
+      "/Users/qifenghou/Codes/UI-test-Demo/node_modules/react-i18next/dist/es/TransWithoutContext.js",
+      "/Users/qifenghou/Codes/UI-test-Demo/node_modules/i18next/dist/esm/i18next.js",
+      "/Users/qifenghou/Codes/UI-test-Demo/node_modules/html-parse-stringify/dist/html-parse-stringify.module.js",
+      "/Users/qifenghou/Codes/UI-test-Demo/node_modules/react-i18next/dist/es/utils.js",
+      "/Users/qifenghou/Codes/UI-test-Demo/node_modules/react-i18next/dist/es/defaults.js",
+      "/Users/qifenghou/Codes/UI-test-Demo/node_modules/react-i18next/dist/es/unescape.js",
+      "/Users/qifenghou/Codes/UI-test-Demo/node_modules/react-i18next/dist/es/i18nInstance.js",
+      "/Users/qifenghou/Codes/UI-test-Demo/node_modules/react-i18next/dist/es/context.js",
+      "/Users/qifenghou/Codes/UI-test-Demo/node_modules/react-i18next/dist/es/initReactI18next.js",
+      "/Users/qifenghou/Codes/UI-test-Demo/node_modules/react-i18next/dist/es/IcuTrans.js",
+      "/Users/qifenghou/Codes/UI-test-Demo/node_modules/react-i18next/dist/es/IcuTransWithoutContext.js",
+      "/Users/qifenghou/Codes/UI-test-Demo/node_modules/react-i18next/dist/es/IcuTransUtils/index.js",
+      "/Users/qifenghou/Codes/UI-test-Demo/node_modules/react-i18next/dist/es/IcuTransUtils/TranslationParserError.js",
+      "/Users/qifenghou/Codes/UI-test-Demo/node_modules/react-i18next/dist/es/IcuTransUtils/htmlEntityDecoder.js",
+      "/Users/qifenghou/Codes/UI-test-Demo/node_modules/react-i18next/dist/es/IcuTransUtils/tokenizer.js",
+      "/Users/qifenghou/Codes/UI-test-Demo/node_modules/react-i18next/dist/es/IcuTransUtils/renderTranslation.js",
+      "/Users/qifenghou/Codes/UI-test-Demo/node_modules/react-i18next/dist/es/useTranslation.js",
+      "/Users/qifenghou/Codes/UI-test-Demo/node_modules/react-i18next/dist/es/withTranslation.js",
+      "/Users/qifenghou/Codes/UI-test-Demo/node_modules/react-i18next/dist/es/Translation.js",
+      "/Users/qifenghou/Codes/UI-test-Demo/node_modules/react-i18next/dist/es/I18nextProvider.js",
+      "/Users/qifenghou/Codes/UI-test-Demo/node_modules/react-i18next/dist/es/withSSR.js",
+      "/Users/qifenghou/Codes/UI-test-Demo/node_modules/react-i18next/dist/es/useSSR.js",
+      "/Users/qifenghou/Codes/UI-test-Demo/src/components/SearchBar.tsx"
+    ],
+    "/Users/qifenghou/Codes/UI-test-Demo/src/components/Footer.tsx": [
+      "/Users/qifenghou/Codes/UI-test-Demo/src/components/Footer.tsx",
+      "/Users/qifenghou/Codes/UI-test-Demo/node_modules/react-router-dom/dist/index.mjs",
+      "/Users/qifenghou/Codes/UI-test-Demo/node_modules/react-router/dist/development/dom-export.mjs",
+      "/Users/qifenghou/Codes/UI-test-Demo/node_modules/react-router/dist/development/chunk-JPUPSTYD.mjs",
+      "/Users/qifenghou/Codes/UI-test-Demo/node_modules/react-router/dist/development/chunk-LFPYN7LY.mjs",
+      "/Users/qifenghou/Codes/UI-test-Demo/node_modules/react-router/dist/development/index.mjs",
+      "/Users/qifenghou/Codes/UI-test-Demo/node_modules/react-i18next/dist/es/index.js",
+      "/Users/qifenghou/Codes/UI-test-Demo/node_modules/react-i18next/dist/es/Trans.js",
+      "/Users/qifenghou/Codes/UI-test-Demo/node_modules/react-i18next/dist/es/TransWithoutContext.js",
+      "/Users/qifenghou/Codes/UI-test-Demo/node_modules/i18next/dist/esm/i18next.js",
+      "/Users/qifenghou/Codes/UI-test-Demo/node_modules/html-parse-stringify/dist/html-parse-stringify.module.js",
+      "/Users/qifenghou/Codes/UI-test-Demo/node_modules/react-i18next/dist/es/utils.js",
+      "/Users/qifenghou/Codes/UI-test-Demo/node_modules/react-i18next/dist/es/defaults.js",
+      "/Users/qifenghou/Codes/UI-test-Demo/node_modules/react-i18next/dist/es/unescape.js",
+      "/Users/qifenghou/Codes/UI-test-Demo/node_modules/react-i18next/dist/es/i18nInstance.js",
+      "/Users/qifenghou/Codes/UI-test-Demo/node_modules/react-i18next/dist/es/context.js",
+      "/Users/qifenghou/Codes/UI-test-Demo/node_modules/react-i18next/dist/es/initReactI18next.js",
+      "/Users/qifenghou/Codes/UI-test-Demo/node_modules/react-i18next/dist/es/IcuTrans.js",
+      "/Users/qifenghou/Codes/UI-test-Demo/node_modules/react-i18next/dist/es/IcuTransWithoutContext.js",
+      "/Users/qifenghou/Codes/UI-test-Demo/node_modules/react-i18next/dist/es/IcuTransUtils/index.js",
+      "/Users/qifenghou/Codes/UI-test-Demo/node_modules/react-i18next/dist/es/IcuTransUtils/TranslationParserError.js",
+      "/Users/qifenghou/Codes/UI-test-Demo/node_modules/react-i18next/dist/es/IcuTransUtils/htmlEntityDecoder.js",
+      "/Users/qifenghou/Codes/UI-test-Demo/node_modules/react-i18next/dist/es/IcuTransUtils/tokenizer.js",
+      "/Users/qifenghou/Codes/UI-test-Demo/node_modules/react-i18next/dist/es/IcuTransUtils/renderTranslation.js",
+      "/Users/qifenghou/Codes/UI-test-Demo/node_modules/react-i18next/dist/es/useTranslation.js",
+      "/Users/qifenghou/Codes/UI-test-Demo/node_modules/react-i18next/dist/es/withTranslation.js",
+      "/Users/qifenghou/Codes/UI-test-Demo/node_modules/react-i18next/dist/es/Translation.js",
+      "/Users/qifenghou/Codes/UI-test-Demo/node_modules/react-i18next/dist/es/I18nextProvider.js",
+      "/Users/qifenghou/Codes/UI-test-Demo/node_modules/react-i18next/dist/es/withSSR.js",
+      "/Users/qifenghou/Codes/UI-test-Demo/node_modules/react-i18next/dist/es/useSSR.js"
+    ],
+    "/Users/qifenghou/Codes/UI-test-Demo/src/components/Navbar.tsx": [
+      "/Users/qifenghou/Codes/UI-test-Demo/src/components/Navbar.tsx",
+      "/Users/qifenghou/Codes/UI-test-Demo/node_modules/react-router-dom/dist/index.mjs",
+      "/Users/qifenghou/Codes/UI-test-Demo/node_modules/react-router/dist/development/dom-export.mjs",
+      "/Users/qifenghou/Codes/UI-test-Demo/node_modules/react-router/dist/development/chunk-JPUPSTYD.mjs",
+      "/Users/qifenghou/Codes/UI-test-Demo/node_modules/react-router/dist/development/chunk-LFPYN7LY.mjs",
+      "/Users/qifenghou/Codes/UI-test-Demo/node_modules/react-router/dist/development/index.mjs",
+      "/Users/qifenghou/Codes/UI-test-Demo/node_modules/react-i18next/dist/es/index.js",
+      "/Users/qifenghou/Codes/UI-test-Demo/node_modules/react-i18next/dist/es/Trans.js",
+      "/Users/qifenghou/Codes/UI-test-Demo/node_modules/react-i18next/dist/es/TransWithoutContext.js",
+      "/Users/qifenghou/Codes/UI-test-Demo/node_modules/i18next/dist/esm/i18next.js",
+      "/Users/qifenghou/Codes/UI-test-Demo/node_modules/html-parse-stringify/dist/html-parse-stringify.module.js",
+      "/Users/qifenghou/Codes/UI-test-Demo/node_modules/react-i18next/dist/es/utils.js",
+      "/Users/qifenghou/Codes/UI-test-Demo/node_modules/react-i18next/dist/es/defaults.js",
+      "/Users/qifenghou/Codes/UI-test-Demo/node_modules/react-i18next/dist/es/unescape.js",
+      "/Users/qifenghou/Codes/UI-test-Demo/node_modules/react-i18next/dist/es/i18nInstance.js",
+      "/Users/qifenghou/Codes/UI-test-Demo/node_modules/react-i18next/dist/es/context.js",
+      "/Users/qifenghou/Codes/UI-test-Demo/node_modules/react-i18next/dist/es/initReactI18next.js",
+      "/Users/qifenghou/Codes/UI-test-Demo/node_modules/react-i18next/dist/es/IcuTrans.js",
+      "/Users/qifenghou/Codes/UI-test-Demo/node_modules/react-i18next/dist/es/IcuTransWithoutContext.js",
+      "/Users/qifenghou/Codes/UI-test-Demo/node_modules/react-i18next/dist/es/IcuTransUtils/index.js",
+      "/Users/qifenghou/Codes/UI-test-Demo/node_modules/react-i18next/dist/es/IcuTransUtils/TranslationParserError.js",
+      "/Users/qifenghou/Codes/UI-test-Demo/node_modules/react-i18next/dist/es/IcuTransUtils/htmlEntityDecoder.js",
+      "/Users/qifenghou/Codes/UI-test-Demo/node_modules/react-i18next/dist/es/IcuTransUtils/tokenizer.js",
+      "/Users/qifenghou/Codes/UI-test-Demo/node_modules/react-i18next/dist/es/IcuTransUtils/renderTranslation.js",
+      "/Users/qifenghou/Codes/UI-test-Demo/node_modules/react-i18next/dist/es/useTranslation.js",
+      "/Users/qifenghou/Codes/UI-test-Demo/node_modules/react-i18next/dist/es/withTranslation.js",
+      "/Users/qifenghou/Codes/UI-test-Demo/node_modules/react-i18next/dist/es/Translation.js",
+      "/Users/qifenghou/Codes/UI-test-Demo/node_modules/react-i18next/dist/es/I18nextProvider.js",
+      "/Users/qifenghou/Codes/UI-test-Demo/node_modules/react-i18next/dist/es/withSSR.js",
+      "/Users/qifenghou/Codes/UI-test-Demo/node_modules/react-i18next/dist/es/useSSR.js"
+    ],
+    "/Users/qifenghou/Codes/UI-test-Demo/src/components/SearchBar.tsx": [
+      "/Users/qifenghou/Codes/UI-test-Demo/src/components/SearchBar.tsx",
+      "/Users/qifenghou/Codes/UI-test-Demo/node_modules/react-i18next/dist/es/index.js",
+      "/Users/qifenghou/Codes/UI-test-Demo/node_modules/react-i18next/dist/es/Trans.js",
+      "/Users/qifenghou/Codes/UI-test-Demo/node_modules/react-i18next/dist/es/TransWithoutContext.js",
+      "/Users/qifenghou/Codes/UI-test-Demo/node_modules/i18next/dist/esm/i18next.js",
+      "/Users/qifenghou/Codes/UI-test-Demo/node_modules/html-parse-stringify/dist/html-parse-stringify.module.js",
+      "/Users/qifenghou/Codes/UI-test-Demo/node_modules/react-i18next/dist/es/utils.js",
+      "/Users/qifenghou/Codes/UI-test-Demo/node_modules/react-i18next/dist/es/defaults.js",
+      "/Users/qifenghou/Codes/UI-test-Demo/node_modules/react-i18next/dist/es/unescape.js",
+      "/Users/qifenghou/Codes/UI-test-Demo/node_modules/react-i18next/dist/es/i18nInstance.js",
+      "/Users/qifenghou/Codes/UI-test-Demo/node_modules/react-i18next/dist/es/context.js",
+      "/Users/qifenghou/Codes/UI-test-Demo/node_modules/react-i18next/dist/es/initReactI18next.js",
+      "/Users/qifenghou/Codes/UI-test-Demo/node_modules/react-i18next/dist/es/IcuTrans.js",
+      "/Users/qifenghou/Codes/UI-test-Demo/node_modules/react-i18next/dist/es/IcuTransWithoutContext.js",
+      "/Users/qifenghou/Codes/UI-test-Demo/node_modules/react-i18next/dist/es/IcuTransUtils/index.js",
+      "/Users/qifenghou/Codes/UI-test-Demo/node_modules/react-i18next/dist/es/IcuTransUtils/TranslationParserError.js",
+      "/Users/qifenghou/Codes/UI-test-Demo/node_modules/react-i18next/dist/es/IcuTransUtils/htmlEntityDecoder.js",
+      "/Users/qifenghou/Codes/UI-test-Demo/node_modules/react-i18next/dist/es/IcuTransUtils/tokenizer.js",
+      "/Users/qifenghou/Codes/UI-test-Demo/node_modules/react-i18next/dist/es/IcuTransUtils/renderTranslation.js",
+      "/Users/qifenghou/Codes/UI-test-Demo/node_modules/react-i18next/dist/es/useTranslation.js",
+      "/Users/qifenghou/Codes/UI-test-Demo/node_modules/react-i18next/dist/es/withTranslation.js",
+      "/Users/qifenghou/Codes/UI-test-Demo/node_modules/react-i18next/dist/es/Translation.js",
+      "/Users/qifenghou/Codes/UI-test-Demo/node_modules/react-i18next/dist/es/I18nextProvider.js",
+      "/Users/qifenghou/Codes/UI-test-Demo/node_modules/react-i18next/dist/es/withSSR.js",
+      "/Users/qifenghou/Codes/UI-test-Demo/node_modules/react-i18next/dist/es/useSSR.js"
+    ]
+  }
+}

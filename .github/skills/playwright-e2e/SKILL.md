@@ -10,6 +10,16 @@ description: >-
 
 # Playwright E2E Testing
 
+## ⚠️ Report-Only Policy
+
+This skill generates and runs tests **only**. It does NOT fix failures.
+
+- When tests fail, output a structured error report with root cause analysis and fix suggestions
+- Do NOT automatically modify test files or source code to fix failures
+- Do NOT proactively offer to apply fixes — wait for the tester to explicitly request changes
+- When discovering application bugs during testing, report them as findings but do NOT modify source files
+- Generate tests that reflect the **current state** of the application — do NOT pre-adjust tests to avoid expected failures
+
 ## Prerequisites
 
 Before generating E2E tests, the following must be available from the ui-test agent:

@@ -12,16 +12,23 @@ export default function DestinationsPage() {
   const [keyword, setKeyword] = useState('');
   const [region, setRegion] = useState(searchParams.get('region') ?? '');
   const [type, setType] = useState(searchParams.get('type') ?? '');
+  const [sortBy, setSortBy] = useState('');
 
   const filtered = useMemo(() => {
     const kw = keyword.toLowerCase();
-    return destinations.filter((d) => {
+    const result = destinations.filter((d) => {
       const matchKeyword = !kw || t(d.nameKey).toLowerCase().includes(kw) || t(d.descKey).toLowerCase().includes(kw);
       const matchRegion = !region || d.region === region;
       const matchType = !type || d.type === type;
       return matchKeyword && matchRegion && matchType;
     });
-  }, [keyword, region, type, t]);
+    if (sortBy === 'rating') {
+      result.sort((a, b) => b.rating - a.rating);
+    } else if (sortBy === 'name') {
+      result.sort((a, b) => t(a.nameKey).localeCompare(t(b.nameKey)));
+    }
+    return result;
+  }, [keyword, region, type, sortBy, t]);
 
   return (
     <main className="bg-sky-50 min-h-screen">
@@ -37,9 +44,11 @@ export default function DestinationsPage() {
           keyword={keyword}
           region={region}
           type={type}
+          sortBy={sortBy}
           onKeywordChange={setKeyword}
           onRegionChange={setRegion}
           onTypeChange={setType}
+          onSortChange={setSortBy}
         />
 
         {/* Count */}

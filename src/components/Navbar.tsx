@@ -14,6 +14,8 @@ export default function Navbar() {
   const navLinks = [
     { to: '/', label: t('nav.home') },
     { to: '/destinations', label: t('nav.destinations') },
+    { to: '/favorites', label: t('nav.favorites') },
+    { to: '/trips', label: t('nav.tripPlanner') },
     { to: '/about', label: t('nav.about') },
   ];
 

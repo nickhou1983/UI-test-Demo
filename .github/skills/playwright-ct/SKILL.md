@@ -10,6 +10,16 @@ description: >-
 
 # Playwright Component Testing
 
+## ⚠️ Report-Only Policy
+
+This skill generates and runs tests **only**. It does NOT fix failures.
+
+- When tests fail, output a structured error report with root cause analysis and fix suggestions
+- Do NOT automatically modify test files or source code to fix failures
+- Do NOT proactively offer to apply fixes — wait for the tester to explicitly request changes
+- When discovering component bugs during testing (wrong rendering, broken events), report them as findings but do NOT modify source files
+- Generate tests that reflect the **current state** of the components — do NOT pre-adjust tests to avoid expected failures
+
 Uses Playwright Component Testing to mount and test individual components in isolation.
 
 ## Prerequisites

@@ -5,15 +5,17 @@ interface Props {
   keyword: string;
   region: string;
   type: string;
+  sortBy: string;
   onKeywordChange: (v: string) => void;
   onRegionChange: (v: string) => void;
   onTypeChange: (v: string) => void;
+  onSortChange: (v: string) => void;
 }
 
 const regions = ['asia', 'europe', 'north-america', 'south-america', 'africa', 'oceania'];
 const types = ['beach', 'mountain', 'city', 'culture'];
 
-export default function FilterBar({ keyword, region, type, onKeywordChange, onRegionChange, onTypeChange }: Props) {
+export default function FilterBar({ keyword, region, type, sortBy, onKeywordChange, onRegionChange, onTypeChange, onSortChange }: Props) {
   const { t } = useTranslation();
 
   return (
@@ -42,6 +44,16 @@ export default function FilterBar({ keyword, region, type, onKeywordChange, onRe
         {types.map((tp) => (
           <option key={tp} value={tp}>{t(`filter.${tp}`)}</option>
         ))}
+      </select>
+      <select
+        value={sortBy}
+        onChange={(e) => onSortChange(e.target.value)}
+        aria-label={t('destinations.sort')}
+        className="px-4 py-3 rounded-lg border border-slate-200 bg-white text-slate-700 focus:border-blue-500 focus:outline-none"
+      >
+        <option value="">{t('destinations.sort.default')}</option>
+        <option value="rating">{t('destinations.sort.rating')}</option>
+        <option value="name">{t('destinations.sort.name')}</option>
       </select>
     </div>
   );

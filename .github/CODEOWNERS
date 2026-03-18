@@ -1,0 +1,3 @@
+# Visual regression snapshots — require review for baseline changes
+tests/visual/ @nickhou1983
+*-snapshots/ @nickhou1983

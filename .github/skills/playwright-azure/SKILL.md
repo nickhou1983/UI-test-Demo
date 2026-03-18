@@ -10,6 +10,10 @@ description: >-
 
 # Azure Playwright Workspace Integration
 
+## ⚠️ Report-Only Policy
+
+When Azure configuration or authentication issues are detected, report the issue with diagnostic details and suggested fixes but do NOT automatically modify configuration files, environment variables, or Azure resources unless the tester explicitly requests it.
+
 Cloud-based testing via [Azure App Testing — Playwright Workspace](https://learn.microsoft.com/azure/playwright-testing/).
 
 > **Note:** The legacy "Microsoft Playwright Testing" service (package `@azure/microsoft-playwright-testing`) was retired on 2026-03-08. Use the replacement **Azure App Testing** with package `@azure/playwright`.
@@ -29,14 +33,18 @@ Cloud-based testing via [Azure App Testing — Playwright Workspace](https://lea
 
 > - In the workspace → **setup guide**
 > - Copy the **region endpoint URL** under "Add region endpoint in your setup"
+> - The portal URL format is: `https://<region>.api.playwright.microsoft.com/playwrightworkspaces/<workspace-id>`
+> - For `.env`, convert to WebSocket format: `wss://<region>.api.playwright.microsoft.com/playwrightworkspaces/<workspace-id>/browsers`
+> - ⚠️ Do NOT use the legacy `/accounts/` path — use `/playwrightworkspaces/` path
 
 ### 3. Set Up Authentication
 
 **Option A — Entra ID / DefaultAzureCredential (recommended):**
 > ```bash
+> npm install -D @azure/identity
 > az login
 > ```
-> The `@azure/playwright` SDK uses `DefaultAzureCredential` automatically.
+> The service config uses `new DefaultAzureCredential()` from `@azure/identity` — this automatically picks up credentials from Azure CLI, managed identity, or environment variables.
 
 **Option B — Access Token (quick start):**
 > - Workspace → **Access tokens** → **Generate new token** (max 90 days expiry)
@@ -46,9 +54,9 @@ Cloud-based testing via [Azure App Testing — Playwright Workspace](https://lea
 
 ### 4. Configure Environment
 
-> Use a `.env` file (recommended with `dotenv`):
+> Use a `.env` file (auto-loaded by service config via `process.loadEnvFile`):
 > ```
-> PLAYWRIGHT_SERVICE_URL={MY-REGION-ENDPOINT}
+> PLAYWRIGHT_SERVICE_URL=wss://<region>.api.playwright.microsoft.com/playwrightworkspaces/<workspace-id>/browsers
 > ```
 > For CI/CD, add as GitHub Actions secret: `PLAYWRIGHT_SERVICE_URL`
 
@@ -58,9 +66,14 @@ See the `playwright-config` skill for `playwright.service.config.ts` template.
 
 The service config:
 - **Inherits** everything from `playwright.config.ts`
-- **Adds** Azure PT connection via `getServiceConfig()`
+- **Adds** Azure PT connection via `createAzurePlaywrightConfig()`
+- **Uses** `DefaultAzureCredential` from `@azure/identity` for Entra ID auth (requires `az login`)
 - **Adds** Azure PT reporter for portal dashboard
 - **Overrides** workers count for cloud parallelism
+
+**Required RBAC roles:**
+- **Reader** on the Playwright Workspace resource (to run tests)
+- **Storage Blob Data Contributor** on the workspace storage account (to upload test artifacts/reports)
 
 ## Cloud Execution Strategy
 

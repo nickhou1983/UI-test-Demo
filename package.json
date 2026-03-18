@@ -15,7 +15,9 @@
     "test:update-snapshots": "playwright test --project=visual --update-snapshots",
     "test:azure": "playwright test --config=playwright.service.config.ts",
     "test:azure:e2e": "playwright test --config=playwright.service.config.ts --project=e2e",
-    "test:azure:visual": "playwright test --config=playwright.service.config.ts --project=visual"
+    "test:azure:visual": "playwright test --config=playwright.service.config.ts --project=visual",
+    "test:visual:vlm": "VLM_REVIEW=true playwright test --project=visual",
+    "test:azure:visual:vlm": "VLM_REVIEW=true playwright test --config=playwright.service.config.ts --project=visual"
   },
   "dependencies": {
     "i18next": "^25.8.18",
@@ -23,6 +25,8 @@
     "react-router-dom": "^7.13.1"
   },
   "devDependencies": {
+    "@argos-ci/playwright": "^6.4.2",
+    "@azure/identity": "^4.13.0",
     "@azure/playwright": "^1.1.2",
     "@eslint/js": "^9.39.4",
     "@playwright/experimental-ct-react": "^1.58.2",
@@ -37,6 +41,7 @@
     "eslint-plugin-react-hooks": "^7.0.1",
     "eslint-plugin-react-refresh": "^0.5.2",
     "globals": "^17.4.0",
+    "openai": "^6.32.0",
     "postcss": "^8.5.8",
     "pptxgenjs": "^4.0.1",
     "react": "^19.2.4",
