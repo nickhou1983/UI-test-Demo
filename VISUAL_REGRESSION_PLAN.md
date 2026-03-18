@@ -28,7 +28,7 @@
 ### 推荐顺序
 
 1. Playwright 原生视觉回归
-2. Argos
+2. Azure Playwright Workspace
 3. Percy
 4. Applitools Eyes
 5. Chromatic
@@ -102,16 +102,16 @@
 - 首页搜索无结果状态
 - 移动端导航菜单展开状态
 
-### Phase 2: 把视觉回归纳入 PR 审阅流
+### Phase 2: 统一云端执行与基线环境
 
-当页面级视觉测试稳定后，再考虑引入 Argos 做以下能力：
+当页面级视觉测试稳定后，优先把页面视觉回归统一到 Azure Playwright Workspace：
 
-- Pull Request 差异审阅
-- GitHub Checks 集成
-- 视觉差异批准流程
-- 基线变更审计
+- 使用 Azure Linux 作为页面基线的权威环境
+- 在 CI 中直接执行 Playwright visual project 并以测试结果判定通过/失败
+- 保持本地视觉测试用于快速验证，避免多环境基线混用
+- 通过 artifact 和 HTML 报告完成差异排查
 
-这一步不会推翻 Phase 1，只是承接 Playwright 的截图结果。
+这一步不会推翻 Phase 1，而是把执行环境收敛到单一可信来源。
 
 ### Phase 3: 组件级视觉测试
 
@@ -249,4 +249,4 @@
 
 ## 10. 一句话决策
 
-对 UI-test-Demo 来说，最优路径不是先引入更重的平台，而是先把现有 Playwright 的视觉回归能力真正落地；等页面级基线稳定后，再用 Argos 承接团队化审阅流程。
+对 UI-test-Demo 来说，最优路径不是引入额外视觉审查平台，而是把现有 Playwright 视觉回归真正落地，并用 Azure Playwright Workspace 统一页面视觉执行环境。

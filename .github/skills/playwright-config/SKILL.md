@@ -3,20 +3,75 @@ name: playwright-config
 description: >-
   Generate Playwright configuration files, npm scripts, and gitignore entries.
   Use when: user needs playwright.config.ts, playwright-ct.config.ts,
-  playwright.service.config.ts, test npm scripts, or .gitignore entries
-  for Playwright test infrastructure setup. Also use when config files
-  are missing and need to be generated before running tests.
+  playwright.service.config.ts, package scripts, .gitignore entries, or a
+  reusable Playwright setup template before running CT, E2E, or visual tests.
 ---
 
-# Playwright Configuration Generation
+# Playwright Configuration Templates
 
 ## ⚠️ Report-Only Policy
 
 When configuration issues are detected (missing files, incorrect settings, version mismatches), report the issue with suggested fixes but do NOT automatically modify configuration files unless the tester explicitly requests it.
 
+## Purpose
+
+This skill is intentionally template-driven.
+
+It should work from a small configuration brief instead of depending on deep
+business-code discovery.
+
+Use it to produce the baseline testing scaffold for:
+
+- local E2E
+- local visual regression
+- local component testing
+- optional Azure Playwright Workspace execution
+
+## Minimal Input Contract
+
+Collect or infer these inputs before generating files:
+
+| Input | Required | Example |
+|-------|----------|---------|
+| framework | yes | `react`, `vue`, `svelte` |
+| build tool | yes | `vite`, `next`, `webpack` |
+| local base URL | yes | `http://localhost:5173` |
+| dev/start command | yes | `npm run dev` |
+| test modes | yes | `e2e`, `visual`, `ct` |
+| Azure enabled | no | `true` / `false` |
+| VLM enabled | no | `true` / `false` |
+
+If the user only asks for a starter setup, default to:
+
+- `e2e` + `visual`
+- local execution only
+- no VLM
+- no Azure service config
+
+## Output Contract
+
+This skill may generate or update only the following categories of artifacts:
+
+1. Playwright config files
+2. package.json scripts
+3. .gitignore additions for Playwright artifacts
+4. test directory scaffolding recommendations
+
+It should not own route discovery, component analysis, or journey mapping.
+
+## Template Selection Matrix
+
+| Need | Artifact |
+|------|----------|
+| Base browser testing | `playwright.config.ts` |
+| Component testing | `playwright-ct.config.ts` |
+| Azure cloud execution | `playwright.service.config.ts` |
+| Standard scripts | `package.json` `scripts` |
+| Artifact hygiene | `.gitignore` |
+
 ## Generate playwright.config.ts
 
-Adapt based on discovered project settings from Module B:
+Adapt from the Minimal Input Contract rather than deep application-specific analysis:
 
 ```typescript
 import { defineConfig, devices } from '@playwright/test';
@@ -59,9 +114,19 @@ export default defineConfig({
 });
 ```
 
+### Base Config Rules
+
+- Keep `testDir` rooted at `./tests`
+- Split projects by responsibility instead of browser
+- Put shared runtime behavior in `use`
+- Keep visual defaults conservative: `maxDiffPixelRatio: 0.01`
+- Reuse existing local server when not running in CI
+
 ## Generate playwright-ct.config.ts
 
-See the `playwright-ct` skill for framework-specific CT configuration templates.
+Only generate this file when CT is requested.
+
+See the `playwright-ct` skill for framework-specific mounting rules.
 
 ## Recommend npm scripts
 
@@ -78,6 +143,12 @@ Suggest adding to `package.json`:
 }
 ```
 
+### Script Rules
+
+- Prefer explicit project-scoped commands over one catch-all command
+- Keep Azure commands separate from local commands
+- Keep VLM opt-in through env-prefixed commands rather than default scripts
+
 ## Recommend .gitignore additions
 
 ```
@@ -88,44 +159,47 @@ blob-report/
 .playwright/
 ```
 
-## Argos CI Reporter Configuration (Optional)
+## Optional VLM Reporter Configuration
 
-When the project uses Argos CI for PR visual review, add the Argos reporter alongside existing reporters.
+When the project uses VLM semantic review for targeted visual diff analysis, add the VLM reporter only when `VLM_REVIEW=true`.
 
 **In `playwright.config.ts`:**
 ```typescript
-reporter: [
-  ['html', { open: 'never' }],
-  ['@argos-ci/playwright/reporter'],
-],
+const reporter: ReporterDescription[] = [['html', { open: 'never' }]];
+
+if (process.env.VLM_REVIEW === 'true') {
+  reporter.push(['./tests/utils/vlm-reporter.ts']);
+}
 ```
 
 **In `playwright.service.config.ts` (Azure PT):**
 ```typescript
-reporter: [
+const reporter: ReporterDescription[] = [
   ['list'],
   ['html', { open: 'never' }],
   ['@azure/playwright/reporter'],
-  ['@argos-ci/playwright/reporter'],
-],
+];
+
+if (process.env.VLM_REVIEW === 'true') {
+  reporter.push(['./tests/utils/vlm-reporter.ts']);
+}
 ```
 
-**Note:** The Argos reporter requires `ARGOS_TOKEN` environment variable to upload screenshots. Without it, the reporter silently skips — no impact on local test execution.
-
-Additional npm scripts for Argos workflows:
+Additional npm scripts for Azure workflows:
 ```json
 {
   "scripts": {
-    "test:azure": "playwright test --config=playwright.service.config.ts",
+    "test:azure": "VLM_REVIEW=false playwright test --config=playwright.service.config.ts",
     "test:azure:e2e": "playwright test --config=playwright.service.config.ts --project=e2e",
-    "test:azure:visual": "playwright test --config=playwright.service.config.ts --project=visual"
+    "test:azure:visual": "VLM_REVIEW=false playwright test --config=playwright.service.config.ts --project=visual",
+    "test:azure:visual:vlm": "VLM_REVIEW=true playwright test --config=playwright.service.config.ts --project=visual"
   }
 }
 ```
 
 ## Generate playwright.service.config.ts (Azure PT)
 
-When user wants Azure Playwright Workspace integration, generate `playwright.service.config.ts`.
+Generate this file only when the user explicitly wants Azure Playwright Workspace integration.
 
 **Recommended:** Run `npm init @azure/playwright@latest` to auto-generate the service config.
 
@@ -181,6 +255,20 @@ Azure-specific npm scripts:
 }
 ```
 
+### Governance Boundary
+
+This skill may provide the service config template, but it does not own:
+
+- Azure workspace provisioning
+- CI/CD governance policy
+- baseline authority rules
+- VLM review policy
+
+Route those concerns to:
+
+- `playwright-azure`
+- `ui-test-governance`
+
 ## Test Directory Structure
 
 Recommend this standard structure:
@@ -200,3 +288,12 @@ tests/
 └── fixtures/                   # Shared test utilities
     └── test-utils.ts
 ```
+
+## Definition Of Done
+
+This skill is complete when:
+
+1. the correct config files for the requested modes exist
+2. the required scripts are present
+3. Playwright artifact directories are ignored appropriately
+4. Azure-specific files are added only when explicitly requested

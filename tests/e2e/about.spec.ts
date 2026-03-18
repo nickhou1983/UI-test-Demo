@@ -6,7 +6,7 @@ test.describe('AboutPage', () => {
   });
 
   test('should display about page title', async ({ page }) => {
-    await expect(page.getByRole('heading', { name: '关于我们' }).first()).toBeVisible();
+    await expect(page.getByRole('heading', { name: '关于本站' }).first()).toBeVisible();
   });
 
   test('should display mission section', async ({ page }) => {

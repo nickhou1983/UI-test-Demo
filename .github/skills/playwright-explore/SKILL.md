@@ -1,4 +1,13 @@
-# Skill: playwright-explore — URL-Only Website Exploration & Test Generation
+---
+name: playwright-explore
+description: >-
+  Explore a live website when only a URL is available and generate reusable
+  Playwright exploration output. Use when: user asks to inspect a site by URL,
+  crawl routes without source code, map a live UI, probe interactions, or
+  generate self-contained E2E and visual test drafts from browser exploration.
+---
+
+# Playwright Explore
 
 ## ⚠️ Report-Only Policy
 
@@ -11,7 +20,16 @@ This skill explores and reports **only**. It does NOT fix issues.
 
 ## Purpose
 
-Explore a live website when **no source code is available** — only a URL. Uses `playwright-cli` (MCP) to crawl pages, discover site structure, probe interactive elements, and generate self-contained E2E/visual tests.
+Explore a live website when **no source code is available** or when URL-first
+reconnaissance is faster than reading the repo. This skill should stay
+self-contained and rely on browser tooling, not repository internals.
+
+It uses `playwright-cli` to:
+
+- crawl reachable pages
+- collect a compact site map
+- probe interactive elements
+- generate self-contained E2E and visual test drafts
 
 ## When to Use
 
@@ -20,10 +38,35 @@ Explore a live website when **no source code is available** — only a URL. Uses
 - No `package.json` in the workspace (or workspace is empty / unrelated)
 - User explicitly states they don't have the source code
 
+## Minimal Input Contract
+
+Only these inputs are required:
+
+| Input | Required | Notes |
+|-------|----------|-------|
+| target URL | yes | entry point for exploration |
+| crawl depth | no | default `3` |
+| page limit | no | default `20` |
+| auth context | no | cookies, credentials, or token if needed |
+| output mode | no | report only, E2E draft, visual draft, or both |
+
 ## Prerequisites
 
-- `playwright-cli` MCP tool must be available (Module A1)
+- `playwright-cli` must be available
 - No other packages or local project setup needed
+
+## Output Contract
+
+The output of this skill should be reusable outside the current repository.
+
+Produce these artifacts conceptually, even if only some are requested:
+
+1. site map
+2. locator strategy map
+3. interaction probe table
+4. proposed user journeys
+5. optional E2E draft
+6. optional visual draft
 
 ## Workflow
 
@@ -74,6 +117,7 @@ Build site map table:
 - Deduplicate by URL
 - Max depth: 3 levels from entry URL
 - Max pages: 20
+- Prioritize primary navigation and high-value content routes over long-tail pages
 
 ### Phase 3: Page-by-Page Crawl
 
@@ -118,6 +162,19 @@ playwright-cli snapshot
 
 Record before/after state changes in I/O probe table.
 
+### Phase 4A: Minimal Classification
+
+For each page, classify the dominant page purpose:
+
+- landing / marketing
+- listing / search
+- detail
+- form / workflow
+- auth / gated
+- mixed utility
+
+This classification should drive which E2E and visual drafts are worth generating.
+
 ### Phase 5: Close Browser
 
 ```bash
@@ -151,6 +208,13 @@ playwright-cli close
 ### Proposed User Journeys
 (at least 3 journeys covering entry→depth, search/filter, cross-page)
 ```
+
+## Reusable Draft Rules
+
+- Generated tests must avoid project-specific imports
+- Generated tests must rely on `baseURL` rather than hard-coded absolute URLs
+- Prefer semantic locators and stable text over brittle CSS selectors
+- Keep assertions focused on visible, user-facing outcomes
 
 ## Test Generation Templates
 
@@ -235,6 +299,12 @@ export default defineConfig({
 });
 ```
 
+## Handoff Rules
+
+- If source code later becomes available, hand off to `ui-test-discovery` or repo-based skills
+- Do not invent component tests for a URL-only target
+- Do not expand into CI or Azure governance from this skill
+
 ## Rules
 
 1. **Same-origin only** — never follow links to external domains
@@ -247,3 +317,12 @@ export default defineConfig({
 8. Use semantic locators exclusively (`getByRole`, `getByText`, `getByLabel`)
 9. Generated tests must be runnable with `npx playwright test` immediately
 10. If the site requires authentication, prompt the user for credentials or a pre-authenticated cookie/token
+
+## Definition Of Done
+
+This skill is complete when:
+
+1. the reachable site structure is mapped to a practical depth
+2. high-value interactions are probed and summarized
+3. at least one realistic journey is documented
+4. optional E2E or visual drafts are self-contained and repo-agnostic

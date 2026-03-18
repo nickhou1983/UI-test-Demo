@@ -31,7 +31,7 @@ test.describe('Complete User Journey', () => {
     // 7. Go to about page
     await page.getByRole('navigation').getByRole('link', { name: '关于我们' }).click();
     await expect(page).toHaveURL(/\/UI-test-Demo\/about$/);
-    await expect(page.getByRole('heading', { name: '关于我们' }).first()).toBeVisible();
+    await expect(page.getByRole('heading', { name: '关于本站' }).first()).toBeVisible();
 
     // 8. Return home via logo
     await page.getByRole('navigation').getByRole('link', { name: 'TravelVista' }).click();

@@ -4,8 +4,8 @@ description: >-
   Generate and run Playwright E2E (end-to-end) tests for any frontend project.
   Use when: user asks to run E2E tests, write E2E tests, test page navigation,
   test form interactions, test i18n switching, create user journey tests,
-  or verify UI behavior across pages. Requires project discovery (Module B)
-  and DOM exploration (Module B+) to be completed first by the ui-test agent.
+  or verify UI behavior across pages. Requires a shared E2E discovery contract
+  and, when needed, runtime DOM exploration from ui-test or ui-test-discovery.
 ---
 
 # Playwright E2E Testing
@@ -22,12 +22,31 @@ This skill generates and runs tests **only**. It does NOT fix failures.
 
 ## Prerequisites
 
-Before generating E2E tests, the following must be available from the ui-test agent:
-- **Project Analysis Report** (Module B) — routes, components, i18n config
-- **Component I/O Profiles** (Module B4b) — per-component inputs, outputs, events, and sample data
-- **User Journey Map** (Module B9d) — prioritized user journeys with steps and state checkpoints
-- **Locator Strategy Map** (Module B+4) — per-page locator recommendations
-- **I/O Probe Results** (Module B+3a) — interaction-to-output mapping for each page
+Before generating E2E tests, the following should be available from the shared
+discovery workflow, usually produced by the ui-test or ui-test-discovery agent:
+- **Project Analysis Report** — routes, components, i18n config
+- **Component I/O Profiles** — per-component inputs, outputs, events, and sample data
+- **User Journey Map** — prioritized user journeys with steps and state checkpoints
+- **Locator Strategy Map** — per-page locator recommendations
+- **I/O Probe Results** — interaction-to-output mapping for each page
+
+## Input Contract
+
+This skill should consume a structured E2E testing brief and should not recreate
+full discovery inside the skill.
+
+Minimum contract:
+
+| Field | Required | Notes |
+|-------|----------|-------|
+| routes under test | yes | entry points and expected content |
+| key interactions | yes | click, fill, switch, submit |
+| locator recommendations | yes | preferred semantic locators |
+| expected outputs | yes | URL, UI text, counts, state changes |
+| user journeys | no | prioritized multi-step flows |
+| i18n expectations | no | if language switching exists |
+
+If route inventory or locators are unclear, stop and request discovery output rather than guessing unstable selectors.
 
 ## Interactive E2E (playwright-cli)
 
@@ -43,7 +62,7 @@ Workflow:
 7. Each action auto-generates Playwright test code — collect these into test files
 
 Guidelines:
-- Test each route discovered in Module B
+- Test each route discovered during project discovery
 - For forms: fill inputs, trigger submit, verify result
 - For navigation: click links, verify URL changes
 - For dynamic content: trigger state changes, verify updates
@@ -179,7 +198,7 @@ test('journey: navigate deep then return via breadcrumb', async ({ page }) => {
 ### Test Generation Rules
 
 - Use semantic locators: `getByRole()`, `getByText()`, `getByLabel()` over CSS selectors
-- **Consult the Locator Strategy Map (Module B+4)** to choose the correct locator for each element
+- **Consult the Locator Strategy Map** to choose the correct locator for each element
 - When a naive locator matches multiple elements (as identified in B+3), use scoping: `page.getByRole('main').getByRole(...)`, `page.locator('nav').first().getByRole(...)`, or `{ exact: true }`
 - For elements inside landmark regions (`<main>`, `<header>`, `<footer>`), scope the locator to the landmark
 - Each page gets its own spec file
@@ -187,30 +206,59 @@ test('journey: navigate deep then return via breadcrumb', async ({ page }) => {
 - Prefer `await expect().toBeVisible()` over raw assertions
 - Add i18n switching test if i18n is detected
 
+### Contract Discipline Rules
+
+- Do not invent routes not present in the input contract
+- Do not use placeholder values when discovery supplied real examples
+- Do not degrade to brittle CSS selectors unless the locator strategy explicitly requires it
+- Fail fast when the journey map is missing but the request is journey-heavy
+
 ### Journey Test Generation Rules
 
-Journey tests are generated from the **Journey Map (Module B9d)**. They live in `tests/e2e/user-journey.spec.ts`.
+Journey tests are generated from the **Journey Map**. They live in `tests/e2e/user-journey.spec.ts`.
 
-- **Each journey from B9d becomes a `test()` block** wrapped in `test.describe('User Journeys', ...)`
+- **Each journey from the discovery output becomes a `test()` block** wrapped in `test.describe('User Journeys', ...)`
 - **Critical priority journeys** must always be generated; Medium priority can be skipped if the user requests minimal tests
 - Each journey step must have an **intermediate assertion** (checkpoint) — never chain multiple navigations without verifying state
 - When a journey includes **state transfer via URL params**, assert the param is present in the URL AND the UI reflects the transferred state (e.g., filter is pre-applied)
 - When a journey includes **i18n switching**, assert at least 2 text elements changed language (not just one)
 - For **backward navigation** steps, verify the return page still shows correct content (no stale state)
-- Journey tests should use **data from PRD / B4a type resolution** for realistic test values, not placeholders
-- Include a **// Journey: {name} [Priority: {level}]** comment at the top of each test for traceability back to B9d
-- If the Journey Coverage Matrix (B9d) shows uncovered routes or actions, flag them as TODO comments in the test file
+- Journey tests should use **data from PRD / type resolution** for realistic test values, not placeholders
+- Include a **// Journey: {name} [Priority: {level}]** comment at the top of each test for traceability back to the discovery output
+- If the Journey Coverage Matrix shows uncovered routes or actions, flag them as TODO comments in the test file
 
 ### I/O-Aware Test Generation Rules
 
-- **Every interactive element** from the I/O Probe Results (B+3a) must be covered by at least one test
-- For each form input: test with representative values from B4b sample data, and assert the observable output change recorded in B+3a
+- **Every interactive element** from the I/O Probe Results must be covered by at least one test
+- For each form input: test with representative values from the discovery sample data, and assert the observable output change recorded in the I/O probe results
 - For **filter/search** components: test that input changes reduce or modify the visible result set (assert count and/or content)
 - For **navigation triggers** (buttons/links that change URL): assert both the click action AND the target page content
 - For **state toggles** (language switcher, theme toggle, sort order): assert the before→after visible difference
 - For **"no results" states**: test with a value known to yield zero results and assert the empty state message
-- Use **resolved type information** from B4a to pick meaningful test values (e.g., use actual category enum values, not arbitrary strings)
+- Use **resolved type information** from discovery to pick meaningful test values (e.g., use actual category enum values, not arbitrary strings)
 - Test **edge cases** identified through type resolution: optional props absent, empty arrays, boundary values for numeric fields
+
+## Handoff Boundary
+
+This skill owns E2E test generation and execution patterns.
+
+It does not own:
+
+- initial route discovery
+- component-level prop analysis
+- Azure governance policy
+- visual baseline authority
+
+Use `ui-test-discovery` when inputs are incomplete and `playwright-azure` or `ui-test-governance` when the request is cloud or CI oriented.
+
+## Definition Of Done
+
+This skill is complete when:
+
+1. the requested routes and interactions are covered with stable assertions
+2. journeys include intermediate checkpoints instead of only final assertions
+3. i18n, search, and filter flows are covered only when present in the contract
+4. missing discovery data is surfaced explicitly rather than guessed
 
 ### Execution Commands
 

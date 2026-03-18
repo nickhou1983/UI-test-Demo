@@ -5,7 +5,8 @@ description: >-
   Use when: user asks for Azure Playwright Testing, Azure PT, cloud testing,
   Azure cloud browsers, Azure test infrastructure, CI/CD with Azure Playwright,
   or setting up playwright.service.config.ts. Covers workspace setup,
-  authentication, CI/CD workflows, cost management, and portal reporting.
+  authentication, cloud execution policy, CI/CD workflows, cost management,
+  and portal reporting.
 ---
 
 # Azure Playwright Workspace Integration
@@ -19,6 +20,34 @@ Cloud-based testing via [Azure App Testing — Playwright Workspace](https://lea
 > **Note:** The legacy "Microsoft Playwright Testing" service (package `@azure/microsoft-playwright-testing`) was retired on 2026-03-08. Use the replacement **Azure App Testing** with package `@azure/playwright`.
 
 **Scope:** E2E tests and Visual Regression tests can run on Azure PT. Component tests (CT) CANNOT — CT requires a local Vite dev server.
+
+## Purpose
+
+This skill is the governance and cloud-execution companion to the local testing skills.
+
+It owns:
+
+- Azure Playwright Workspace connectivity
+- authentication and RBAC expectations
+- cloud execution policy
+- CI/CD wiring for Azure runs
+- portal reporting and cost management
+
+It does not own local test generation templates for CT, E2E, or visual core coverage.
+
+## Input Contract
+
+Before using this skill, collect:
+
+| Input | Required | Example |
+|-------|----------|---------|
+| suite target | yes | `e2e`, `visual`, or both |
+| workspace endpoint | yes | `wss://<region>.../browsers` |
+| auth mode | yes | `DefaultAzureCredential` or access token |
+| execution context | yes | local validation, CI, or baseline update |
+| baseline authority | no | Azure-only visual baselines |
+
+If the request is only for local Playwright setup, route it back to `playwright-config` or the core testing skill instead of using this one.
 
 ## Setup Guide
 
@@ -74,6 +103,25 @@ The service config:
 **Required RBAC roles:**
 - **Reader** on the Playwright Workspace resource (to run tests)
 - **Storage Blob Data Contributor** on the workspace storage account (to upload test artifacts/reports)
+
+## Responsibility Boundary
+
+Use this skill when the question is about cloud execution or governance.
+
+Do not use it for:
+
+- component testing setup
+- route discovery
+- journey generation
+- baseline screenshot selection
+- local-only Playwright config generation
+
+Pair it with:
+
+- `playwright-config` for the service config template
+- `playwright-visual` for screenshot coverage design
+- `playwright-e2e` for journey coverage
+- `ui-test-governance` for higher-level orchestration
 
 ## Cloud Execution Strategy
 
@@ -176,6 +224,15 @@ Recommendations:
 - Use `--grep` for subset of tests during development
 - Monitor: Azure Portal → Playwright Testing workspace → **Usage**
 - Consider: visual regression only on `main`, E2E on all PRs
+
+## Definition Of Done
+
+This skill is complete when:
+
+1. the workspace endpoint and auth path are explicit
+2. the Azure service config path is clear
+3. the cloud execution target suite is defined
+4. CI, artifact, and cost implications are understood for the requested flow
 
 ## Execution Commands
 

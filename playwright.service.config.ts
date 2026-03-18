@@ -1,10 +1,20 @@
-import { defineConfig } from '@playwright/test';
+import { defineConfig, type ReporterDescription } from '@playwright/test';
 import { createAzurePlaywrightConfig, ServiceOS } from '@azure/playwright';
 import { DefaultAzureCredential } from '@azure/identity';
 import { existsSync } from 'fs';
 import baseConfig from './playwright.config';
 
 if (existsSync('.env')) process.loadEnvFile('.env');
+
+const reporter: ReporterDescription[] = [
+  ['list'],
+  ['html', { open: 'never' }],
+  ['@azure/playwright/reporter'],
+];
+
+if (process.env.VLM_REVIEW === 'true') {
+  reporter.push(['./tests/utils/vlm-reporter.ts']);
+}
 
 /**
  * Playwright service config for Azure App Testing — Playwright Workspace.
@@ -29,11 +39,6 @@ export default defineConfig(
   {
     retries: process.env.CI ? 2 : 0,
     workers: process.env.CI ? 10 : undefined,
-    reporter: [
-      ['list'],
-      ['html', { open: 'never' }],
-      ['@azure/playwright/reporter'],
-      ['@argos-ci/playwright/reporter'],
-    ],
+    reporter,
   }
 );

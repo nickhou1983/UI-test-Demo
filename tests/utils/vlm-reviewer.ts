@@ -129,7 +129,7 @@ export async function reviewVisualDiff(
 
   const response = await client.chat.completions.create({
     model: options.deploymentName || process.env.AZURE_OPENAI_DEPLOYMENT || 'gpt-4o',
-    max_tokens: options.maxTokens || 1024,
+    max_completion_tokens: options.maxTokens || 1024,
     temperature: 0.1, // Low temperature for consistent judgments
     messages: [
       { role: 'system', content: VLM_SYSTEM_PROMPT },

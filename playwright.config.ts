@@ -1,4 +1,10 @@
-import { defineConfig, devices } from '@playwright/test';
+import { defineConfig, devices, type ReporterDescription } from '@playwright/test';
+
+const reporter: ReporterDescription[] = [['html', { open: 'never' }]];
+
+if (process.env.VLM_REVIEW === 'true') {
+  reporter.push(['./tests/utils/vlm-reporter.ts']);
+}
 
 export default defineConfig({
   testDir: './tests',
@@ -6,11 +12,7 @@ export default defineConfig({
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,
   workers: process.env.CI ? 1 : undefined,
-  reporter: [
-    ['html', { open: 'never' }],
-    ['@argos-ci/playwright/reporter'],
-    ['./tests/utils/vlm-reporter.ts'],
-  ],
+  reporter,
 
   use: {
     baseURL: 'http://localhost:5173/UI-test-Demo/',
@@ -31,7 +33,7 @@ export default defineConfig({
         ...devices['Desktop Chrome'],
       },
       expect: {
-        toHaveScreenshot: { maxDiffPixelRatio: 0.01 },
+        toHaveScreenshot: { maxDiffPixelRatio: 0.0005 },
       },
     },
   ],

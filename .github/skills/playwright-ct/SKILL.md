@@ -5,7 +5,8 @@ description: >-
   Use when: user asks for component testing, unit testing UI components,
   testing component props, testing component events, mounting components
   in isolation, or testing React/Vue/Svelte/Solid components with Playwright.
-  Requires project discovery (Module B) to be completed first by the ui-test agent.
+  Requires a shared component discovery contract, typically from the ui-test or
+  ui-test-discovery agent, before generating component specs.
 ---
 
 # Playwright Component Testing
@@ -24,10 +25,29 @@ Uses Playwright Component Testing to mount and test individual components in iso
 
 ## Prerequisites
 
-- **Project Analysis Report** (Module B) — components, props, events, dependencies
-- **Component I/O Profiles** (Module B4b) — resolved types, sample values, event payloads
+- **Project Analysis Report** — components, props, events, dependencies
+- **Component I/O Profiles** — resolved types, sample values, event payloads
 - Component testing package installed (`@playwright/experimental-ct-react`, etc.)
 - `playwright-ct.config.ts` must exist (generate via `playwright-config` skill if missing)
+
+## Input Contract
+
+This skill should consume a structured component testing brief rather than repeat
+full discovery inside the skill.
+
+Minimum required inputs per component:
+
+| Field | Required | Notes |
+|-------|----------|-------|
+| component name | yes | import target and spec file name |
+| import path | yes | source file location |
+| required props | yes | with sample values |
+| optional props | no | include default-behavior coverage |
+| emitted events | no | callback names and payload shape |
+| provider requirements | no | router, i18n, context, store |
+| critical rendering outputs | yes | what must be asserted |
+
+If this contract is missing, stop and request discovery output instead of inventing prop shapes.
 
 > **Note:** Component tests always run locally. They CANNOT run on Azure Playwright Workspace
 > because CT requires a local Vite dev server to mount components.
@@ -79,7 +99,7 @@ Generate `tests/fixtures/test-utils.ts` with provider wrappers:
 
 ## Test Generation
 
-For each component discovered in Module B, generate a `tests/component/{Component}.spec.tsx`:
+For each component in the input contract, generate a `tests/component/{Component}.spec.tsx`:
 
 **Rendering test:**
 ```typescript
@@ -115,21 +135,43 @@ test('{ComponentName} handles {event}', async ({ mount }) => {
 ## Generation Rules
 
 - One spec file per component
-- Test all required props with representative values **from B4b Component I/O Profile sample data**
-- Test event handlers with callback tracking — **assert payload type matches B4b event payload definition**
+- Test all required props with representative values **from Component I/O Profile sample data**
+- Test event handlers with callback tracking — **assert payload type matches the Component I/O Profile event payload definition**
 - Wrap in providers if component uses Router/i18n/Context
 - Test conditional rendering branches
 - For components with complex state, test key state transitions
 
 ### I/O Coverage Rules
 
-- **Every Input (Prop)** in the Component I/O Profile must be tested with at least one representative value from B4a deep type resolution
+- **Every Input (Prop)** in the Component I/O Profile must be tested with at least one representative value from shared type resolution output
 - **Every Output (Rendered)** must have a corresponding assertion — if a prop should produce visible text/image/list, assert it
 - **Every Output (Event)** must be tested — mount with a spy callback, trigger the interaction, assert the callback was called with the correct payload type
 - For **union type / enum props** (e.g., `category: 'beach' | 'mountain' | 'city'`), test at least 2 distinct values and verify the rendered difference
 - For **optional props**, test both with and without the prop to verify default behavior
 - For **array props** (e.g., `items: Destination[]`), test with empty array, single item, and multiple items
-- Use the **resolved type fields** from B4a to construct realistic mock data instead of placeholder strings like `'test'` or `'foo'`
+- Use the **resolved type fields** from discovery output to construct realistic mock data instead of placeholder strings like `'test'` or `'foo'`
+
+## Handoff Boundary
+
+This skill owns CT generation and execution rules.
+
+It does not own:
+
+- component discovery
+- prop type inference from source code
+- route or journey analysis
+- Azure execution policy
+
+Use `ui-test-discovery` for missing inputs and `playwright-config` for missing CT config.
+
+## Definition Of Done
+
+This skill is complete when:
+
+1. each targeted component has a focused spec
+2. required props, outputs, and events are covered with realistic values
+3. provider wrapping is explicit where needed
+4. no missing discovery details are silently guessed
 
 ## Execution Commands
 

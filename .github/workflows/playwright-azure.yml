@@ -31,62 +31,10 @@ jobs:
 
       - name: Run Visual Regression tests on Azure Playwright Workspace
         run: npx playwright test --config=playwright.service.config.ts --project=visual
-        continue-on-error: true
         env:
           PLAYWRIGHT_SERVICE_URL: ${{ secrets.PLAYWRIGHT_SERVICE_URL }}
           PLAYWRIGHT_SERVICE_ACCESS_TOKEN: ${{ secrets.PLAYWRIGHT_SERVICE_ACCESS_TOKEN }}
-          ARGOS_TOKEN: ${{ secrets.ARGOS_TOKEN }}
-          VLM_REVIEW: 'true'
-          AZURE_OPENAI_ENDPOINT: ${{ secrets.AZURE_OPENAI_ENDPOINT }}
-          AZURE_OPENAI_API_KEY: ${{ secrets.AZURE_OPENAI_API_KEY }}
-          AZURE_OPENAI_DEPLOYMENT: ${{ vars.AZURE_OPENAI_DEPLOYMENT || 'gpt-4o' }}
-          VLM_MAX_CALLS: '10'
-          VLM_CONFIDENCE_THRESHOLD: '0.7'
-
-      - name: Upload VLM review report
-        uses: actions/upload-artifact@v4
-        if: ${{ !cancelled() && hashFiles('vlm-review-report.json') != '' }}
-        with:
-          name: vlm-review-report
-          path: vlm-review-report.json
-          retention-days: 14
-
-      - name: Post VLM review summary to PR
-        if: ${{ github.event_name == 'pull_request' && !cancelled() && hashFiles('vlm-review-report.json') != '' }}
-        uses: actions/github-script@v7
-        with:
-          script: |
-            const fs = require('fs');
-            const reportPath = 'vlm-review-report.json';
-            if (!fs.existsSync(reportPath)) return;
-            const report = JSON.parse(fs.readFileSync(reportPath, 'utf-8'));
-            if (report.entries.length === 0) return;
-
-            const severity_icons = { passed_vlm: '✅', warned_vlm: '⚠️', failed: '❌' };
-            let body = `## 🔍 VLM Visual Review Report\n\n`;
-            body += `| Metric | Value |\n|--------|-------|\n`;
-            body += `| VLM Calls | ${report.vlmCallCount} / ${report.maxCalls} |\n`;
-            body += `| Passed (VLM) | ${report.summary.passed_vlm} |\n`;
-            body += `| Warned (VLM) | ${report.summary.warned_vlm} |\n`;
-            body += `| Failed | ${report.summary.failed} |\n\n`;
-
-            if (report.entries.length > 0) {
-              body += `### Details\n\n`;
-              body += `| Status | Test | Severity | Description |\n|--------|------|----------|-------------|\n`;
-              for (const e of report.entries) {
-                const icon = severity_icons[e.action] || '❓';
-                body += `| ${icon} | ${e.testTitle} | ${e.vlmSeverity || '-'} | ${e.vlmDescription?.substring(0, 100) || '-'} |\n`;
-              }
-            }
-
-            body += `\n> Confidence threshold: ${report.confidenceThreshold} | [View full report](../actions/runs/${context.runId})`;
-
-            await github.rest.issues.createComment({
-              issue_number: context.issue.number,
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              body
-            });
+          VLM_REVIEW: 'false'
 
       - name: Upload test report
         uses: actions/upload-artifact@v4

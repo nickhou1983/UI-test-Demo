@@ -113,7 +113,7 @@ export function TestWrapper({ children, initialEntries = ['/'] }) {
 | `Navbar.spec.tsx` | Navbar | 品牌名、3个导航链接、语言切换按钮、active 状态高亮、移动端汉堡菜单、Logo 链接 |
 | `SearchBar.spec.tsx` | SearchBar | 默认/自定义 placeholder、值显示与输入、onChange 回调触发 |
 | `FilterBar.spec.tsx` | FilterBar | 搜索框 + 2 个下拉菜单组合、6 地区 / 4 类型选项、三个 onChange 回调、预选值显示 |
-| `Carousel.spec.tsx` | Carousel | 全部 slide 渲染、导航圆点数量、点击切换、自动播放（默认 4000ms）、首个圆点高亮、CSS transform 变化 |
+| `Carousel.spec.tsx` | Carousel | 全部轮播项渲染、导航圆点数量、点击切换、自动播放（默认 4000ms）、首个圆点高亮、CSS transform 变化 |
 | `DestinationCard.spec.tsx` | DestinationCard | 名称/国家（i18n）、类型徽章、评分数字、星级渲染（实心/空心）、链接地址 |
 | `Footer.spec.tsx` | Footer | 品牌名、3 个导航链接、社交媒体区域、版权文字 |
 
@@ -145,7 +145,7 @@ export function TestWrapper({ children, initialEntries = ['/'] }) {
 
 | 属性 | 说明 |
 |------|------|
-| **工具** | `@playwright/test` + `@argos-ci/playwright` |
+| **工具** | `@playwright/test` + 可选 VLM 语义复核 |
 | **配置文件** | `playwright.config.ts` → project `visual` |
 | **运行命令** | `npm run test:visual` |
 | **测试文件** | `tests/visual/pages.visual.spec.ts` |
@@ -154,14 +154,18 @@ export function TestWrapper({ children, initialEntries = ['/'] }) {
 
 **核心机制：** 截取页面当前截图，与基线快照逐像素比对。超过阈值的差异将导致测试失败。首次运行时生成基线截图，后续运行与基线对比。
 
-**4 个页面截图测试用例：**
+**8 个页面截图测试用例：**
 
 | 截图名称 | 页面 | 等待策略 | 截图范围 | 特殊配置 |
 |---------|------|---------|---------|---------|
-| `home-main.png` | `/` | `networkidle` + 验证 Hero/热门目的地/旅行主题文本 | `main` 元素 | `animations: 'disabled'` |
+| `home-page.png` | `/` | `networkidle` + 验证首页主标题 | 整页（`fullPage: true`） | `animations: 'disabled'` |
 | `destinations-page.png` | `/destinations` | `networkidle` + 验证页面标题 | 整页（`fullPage: true`） | `animations: 'disabled'` |
 | `about-page.png` | `/about` | `networkidle` + 验证页面标题 | 整页（`fullPage: true`） | `animations: 'disabled'` |
 | `destination-detail-bali.png` | `/destinations/bali` | `networkidle` + 验证"巴厘岛"标题 | 整页（`fullPage: true`） | `animations: 'disabled'` |
+| `favorites-page.png` | `/favorites` | `networkidle` + 注入收藏数据并验证卡片 | 整页（`fullPage: true`） | `animations: 'disabled'` |
+| `trip-planner-page.png` | `/trips` | `networkidle` + 注入行程数据并验证行程卡片 | 整页（`fullPage: true`） | `animations: 'disabled'` |
+| `trip-edit-page.png` | `/trips/visual-trip` | `networkidle` + 验证行程编辑表单 | 整页（`fullPage: true`） | `animations: 'disabled'` |
+| `not-found-page.png` | `/missing-route` | `networkidle` + 验证 404 标题 | 整页（`fullPage: true`） | `animations: 'disabled'` |
 
 > **关键设计决策：** 所有截图都禁用 CSS 动画（`animations: 'disabled'`），确保截图稳定性，避免动画帧差异导致的误报。
 
@@ -238,7 +242,7 @@ export function TestWrapper({ children, initialEntries = ['/'] }) {
 │                         │     │                  │     │                          │
 │ • 运行中的 Web 应用       │     │ Playwright Visual│     │ ✅/❌ 截图比对结果        │
 │ • 基线截图 (snapshots/)  │     │ screenshot()     │     │ 新截图 / 差异截图          │
-│ • maxDiffPixelRatio:    │ ──→ │ → pixel diff     │ ──→ │ Argos CI 上传            │
+│ • maxDiffPixelRatio:    │ ──→ │ → pixel diff     │ ──→ │ HTML 报告 + 差异截图      │
 │   0.01 (1% 阈值)        │     │ → threshold check│     │ HTML 测试报告              │
 │ • playwright.config.ts  │     │ animations: off  │     │ (playwright-report/)      │
 │   (project: visual)     │     │                  │     │                          │
@@ -249,7 +253,7 @@ export function TestWrapper({ children, initialEntries = ['/'] }) {
 |------|------|
 | **Input** | 运行中的 Web 应用、已有的基线截图（`tests/visual/pages.visual.spec.ts-snapshots/` 目录）、比对阈值配置（`maxDiffPixelRatio: 0.01`）、`visual` project 配置 |
 | **Process** | 导航到目标页面 → 等待 `networkidle` → 验证关键内容已渲染 → 禁用动画后截图 → 与基线逐像素比对 → 判断差异是否超过 1% 阈值 |
-| **Output** | 视觉比对结果（pass：差异在阈值内 / fail：差异超阈值）、新生成或更新的截图、差异可视化图（标注变化区域）、通过 `@argos-ci/playwright/reporter` 上传至 Argos CI 进行视觉审查 |
+| **Output** | 视觉比对结果（pass：差异在阈值内 / fail：差异超阈值）、新生成或更新的截图、差异可视化图（标注变化区域）、HTML 报告与 `test-results/` 产物 |
 
 ### Stage 5：Azure 云端执行
 
@@ -260,7 +264,7 @@ export function TestWrapper({ children, initialEntries = ['/'] }) {
 │ • 全部本地测试代码        │     │ Azure Playwright │     │ 云端测试结果               │
 │ • playwright.service.   │     │ Workspace        │     │ Azure Portal 仪表板       │
 │   config.ts             │ ──→ │ Linux Chromium   │ ──→ │ HTML 报告                 │
-│ • DefaultAzureCredential│     │ 10 workers 并行   │     │ Argos CI 报告             │
+│ • DefaultAzureCredential│     │ 10 workers 并行   │     │ Azure Portal + HTML 报告  │
 │ • PLAYWRIGHT_SERVICE_URL│     │ exposeNetwork:   │     │ @azure/playwright 报告     │
 │                         │     │ '<loopback>'     │     │                          │
 └─────────────────────────┘     └──────────────────┘     └──────────────────────────┘
@@ -270,7 +274,7 @@ export function TestWrapper({ children, initialEntries = ['/'] }) {
 |------|------|
 | **Input** | 本地测试代码 + `playwright.service.config.ts`（继承主配置并叠加 Azure 覆盖层）、Microsoft Entra ID 认证（`DefaultAzureCredential`）、Azure Playwright Workspace 服务 URL |
 | **Process** | Playwright 通过 `@azure/playwright` SDK 连接到 Azure 云端 → 使用 Linux OS 的 Chromium 浏览器 → 最多 10 个 worker 并行执行 → `exposeNetwork: '<loopback>'` 让云端浏览器能访问本地 webServer → 2 次自动重试（CI 环境） |
-| **Output** | 与本地相同的测试结果 + Azure Playwright Portal 仪表板（趋势图、trace 查看器、flaky test 检测）+ 三种格式报告（HTML / Azure / Argos） |
+| **Output** | 与本地相同的测试结果 + Azure Playwright Portal 仪表板（趋势图、trace 查看器、flaky test 检测）+ 两种格式报告（HTML / Azure） |
 
 ### Stage 6：CI 集成（GitHub Actions）
 
@@ -282,18 +286,16 @@ export function TestWrapper({ children, initialEntries = ['/'] }) {
 │ • GitHub Secrets:       │     │ playwright-      │     │ Artifacts (14天保留):     │
 │   PLAYWRIGHT_SERVICE_URL│ ──→ │ azure.yml        │ ──→ │  • playwright-report/    │
 │   PLAYWRIGHT_SERVICE_   │     │                  │     │  • test-results/         │
-│   ACCESS_TOKEN          │     │ ubuntu-latest    │     │ Argos CI 视觉审查         │
-│   ARGOS_TOKEN           │     │ Node 22          │     │ Argos 查状态              │
+│   ACCESS_TOKEN          │     │ ubuntu-latest    │     │ HTML 报告 + test-results  │
+│                         │     │ Node 22          │     │ CI 通过/失败状态           │
 └─────────────────────────┘     └──────────────────┘     └──────────────────────────┘
 ```
 
 | 字段 | 说明 |
 |------|------|
-| **Input** | Git 事件（push 到 main / PR 到 main / 手动触发 workflow_dispatch）、3 个 GitHub Secrets（Azure 服务 URL、Azure 访问令牌、Argos Token）|
-| **Process** | `actions/checkout@v4` → `actions/setup-node@v4`（Node 22）→ `npm ci` → `npx playwright install --with-deps chromium` → E2E 测试（Azure PT）→ 视觉回归测试（Azure PT，`continue-on-error: true`）→ 上传 artifacts |
-| **Output** | GitHub CI 检查状态（绿色/红色）、`playwright-report/` 产物（HTML 报告，14 天保留）、`test-results/` 产物（trace + 截图，14 天保留）、Argos CI 视觉变更审查 |
-
-> **注意：** 视觉回归测试步骤设为 `continue-on-error: true`，即视觉差异不会阻塞 CI 流水线，需通过 Argos CI 人工审查。
+| **Input** | Git 事件（push 到 main / PR 到 main / 手动触发 workflow_dispatch）、2 个 GitHub Secrets（Azure 服务 URL、Azure 访问令牌）|
+| **Process** | `actions/checkout@v4` → `actions/setup-node@v4`（Node 22）→ `npm ci` → `npx playwright install --with-deps chromium` → E2E 测试（Azure PT）→ 视觉回归测试（Azure PT，失败即阻断）→ 上传 artifacts |
+| **Output** | GitHub CI 检查状态（绿色/红色）、`playwright-report/` 产物（HTML 报告，14 天保留）、`test-results/` 产物（trace + 截图，14 天保留） |
 
 ### Stage 7：部署
 
@@ -328,14 +330,14 @@ export function TestWrapper({ children, initialEntries = ['/'] }) {
 | **并行度** | `fullyParallel: true`，`workers: auto` | CI: `workers: 10`，最多 50 并行 |
 | **重试次数** | 0 | CI: 2 |
 | **认证** | 无需 | `DefaultAzureCredential`（Entra ID，支持 `az login` 或 Service Principal） |
-| **报告格式** | HTML | HTML + Azure Playwright Portal + Argos CI |
+| **报告格式** | HTML | HTML + Azure Playwright Portal |
 | **Trace 捕获** | 首次重试时 | 首次重试时 + Azure Portal 可在线查看 |
 | **截图** | 仅失败时 | 仅失败时 + Azure Portal 可在线查看 |
 | **适用场景** | 开发时快速验证 | CI/CD 流水线、基线一致性（Linux 环境）、大规模并行 |
 
 ### 配置继承关系
 
-```
+```text
 playwright.config.ts  (基础配置: projects, webServer, reporter, use)
         │
         └── playwright.service.config.ts  (叠加 Azure 配置)
@@ -343,7 +345,7 @@ playwright.config.ts  (基础配置: projects, webServer, reporter, use)
                  ├── createAzurePlaywrightConfig(): exposeNetwork, connectTimeout, os, credential
                  ├── workers: 10 (CI)
                  ├── retries: 2 (CI)
-                 └── reporter: [list, html, @azure/playwright, @argos-ci/playwright]
+     └── reporter: [list, html, @azure/playwright] (+ 可选 VLM reporter)
 ```
 
 > **重要提示：** 本地生成的基线截图与 Azure 云端生成的基线截图**不兼容**（操作系统字体渲染差异），需选择一个环境作为基线来源并保持一致。
@@ -369,9 +371,9 @@ Step 4: npx playwright install --with-deps chromium  — 安装浏览器
 Step 5: E2E tests on Azure PT                       — 在 Azure 云端运行 E2E
         └ config: playwright.service.config.ts --project=e2e
         └ env: PLAYWRIGHT_SERVICE_URL, PLAYWRIGHT_SERVICE_ACCESS_TOKEN
-Step 6: Visual tests on Azure PT (continue-on-error) — 在 Azure 云端运行视觉回归
+Step 6: Visual tests on Azure PT                     — 在 Azure 云端运行视觉回归
         └ config: playwright.service.config.ts --project=visual
-        └ env: + ARGOS_TOKEN
+  └ env: VLM_REVIEW=false
 Step 7: Upload playwright-report/ (14 days)          — 上传 HTML 报告
 Step 8: Upload test-results/ (14 days)               — 上传 trace & 截图
 ```
@@ -384,7 +386,6 @@ Step 8: Upload test-results/ (14 days)               — 上传 trace & 截图
 |--------|------|
 | `PLAYWRIGHT_SERVICE_URL` | Azure Playwright Workspace 服务端点 |
 | `PLAYWRIGHT_SERVICE_ACCESS_TOKEN` | Azure 服务访问令牌 |
-| `ARGOS_TOKEN` | Argos CI 视觉审查服务令牌 |
 
 ### 5.2 部署流水线 — `deploy.yml`
 
@@ -464,8 +465,8 @@ Job 2: deploy (depends on build)
 |------|:---------:|:--------:|
 | 组件测试 | 6 | ~30 |
 | E2E 测试 | 6 | ~25 |
-| 视觉回归 | 1 | 4 |
-| **合计** | **13** | **~59** |
+| 视觉回归 | 1 | 8 |
+| **合计** | **13** | **~63** |
 
 ---
 
@@ -475,7 +476,7 @@ Job 2: deploy (depends on build)
 
 | 文件 | 作用 | 关键参数 |
 |------|------|---------|
-| `playwright.config.ts` | 主测试配置 | `baseURL: localhost:5173/UI-test-Demo/`<br>`projects: [e2e, visual]`<br>`webServer: npm run dev`<br>`reporter: [html, argos]`<br>`trace: on-first-retry`<br>`screenshot: only-on-failure` |
+| `playwright.config.ts` | 主测试配置 | `baseURL: localhost:5173/UI-test-Demo/`<br>`projects: [e2e, visual]`<br>`webServer: npm run dev`<br>`reporter: [html] (+ 可选 VLM)`<br>`trace: on-first-retry`<br>`screenshot: only-on-failure` |
 | `playwright-ct.config.ts` | 组件测试配置 | `testDir: ./tests/component`<br>`devices: Desktop Chrome`<br>`ctViteConfig: { css: { postcss } }` |
 | `playwright.service.config.ts` | Azure 云端配置 | 继承 `playwright.config.ts` +<br>`exposeNetwork: '<loopback>'`<br>`connectTimeout: 30000`<br>`os: ServiceOS.LINUX`<br>`credential: DefaultAzureCredential`<br>`workers: 10 (CI)` |
 
@@ -497,12 +498,12 @@ Job 2: deploy (depends on build)
 | `npm run build` | `tsc -b && vite build` | 生产构建 |
 | `npm run test:ct` | `playwright test -c playwright-ct.config.ts` | 运行组件测试 |
 | `npm run test:e2e` | `playwright test --project=e2e` | 运行 E2E 测试 |
-| `npm run test:visual` | `playwright test --project=visual` | 运行视觉回归测试 |
-| `npm run test:all` | `playwright test && playwright test -c playwright-ct.config.ts` | 运行全部测试 |
-| `npm run test:update-snapshots` | `playwright test --project=visual --update-snapshots` | 更新视觉基线截图 |
-| `npm run test:azure` | `playwright test --config=playwright.service.config.ts` | Azure 云端运行全部 |
+| `npm run test:visual` | `VLM_REVIEW=false playwright test --project=visual` | 运行默认视觉回归测试 |
+| `npm run test:all` | `VLM_REVIEW=false playwright test && playwright test -c playwright-ct.config.ts` | 运行全部测试 |
+| `npm run test:update-snapshots` | `VLM_REVIEW=false playwright test --project=visual --update-snapshots` | 更新默认视觉基线截图 |
+| `npm run test:azure` | `VLM_REVIEW=false playwright test --config=playwright.service.config.ts` | Azure 云端运行全部 |
 | `npm run test:azure:e2e` | `playwright test --config=playwright.service.config.ts --project=e2e` | Azure 云端 E2E |
-| `npm run test:azure:visual` | `playwright test --config=playwright.service.config.ts --project=visual` | Azure 云端视觉回归 |
+| `npm run test:azure:visual` | `VLM_REVIEW=false playwright test --config=playwright.service.config.ts --project=visual` | Azure 云端默认视觉回归 |
 
 ---
 
@@ -522,7 +523,7 @@ Job 2: deploy (depends on build)
 ┌─────────┐ ┌─────────┐ ┌──────────┐
 │Playwright│ │Playwright│ │Playwright│
 │ CT React│ │  E2E    │ │  Visual  │
-│ v1.58   │ │  v1.58  │ │ + Argos  │
+│ v1.58   │ │  v1.58  │ │ + VLM    │
 └────┬────┘ └────┬────┘ └────┬─────┘
      │           │           │
      │    ┌──────┴──────┐    │
@@ -568,7 +569,6 @@ Job 2: deploy (depends on build)
 | `@playwright/experimental-ct-react` | 1.58 | React 组件测试框架 |
 | `@azure/playwright` | 1.1 | Azure 云端浏览器连接 + Portal 报告 |
 | `@azure/identity` | 4.13 | Azure Entra ID 认证 |
-| `@argos-ci/playwright` | 6.4 | 视觉回归截图上传 + PR 审查集成 |
 
 ### 8.3 目录结构总览
 

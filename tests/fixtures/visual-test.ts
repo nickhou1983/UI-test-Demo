@@ -121,10 +121,8 @@ export const test = base.extend<{
         }
 
         // Step 3: Find the baseline and actual screenshot files
-        const snapshotDir = testInfo.snapshotDir;
-        const snapshotSuffix = testInfo.snapshotSuffix;
-        const baselineName = basename(name, '.png') + snapshotSuffix + '.png';
-        const baselinePath = join(snapshotDir, baselineName);
+        // Use testInfo.snapshotPath() to correctly resolve project name + platform suffix
+        const baselinePath = testInfo.snapshotPath(name);
 
         // Actual screenshot is in test results output dir
         const actualName = basename(name, '.png') + '-actual.png';

@@ -12,7 +12,7 @@ test.describe('Navigation', () => {
     // Destinations → About
     await page.getByRole('navigation').getByRole('link', { name: '关于我们' }).click();
     await expect(page).toHaveURL(/\/UI-test-Demo\/about$/);
-    await expect(page.getByRole('heading', { name: '关于我们' }).first()).toBeVisible();
+    await expect(page.getByRole('heading', { name: '关于本站' }).first()).toBeVisible();
 
     // About → Home
     await page.getByRole('navigation').getByRole('link', { name: '首页' }).click();

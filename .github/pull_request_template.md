@@ -15,7 +15,7 @@
 
 <!-- Complete this section if your PR includes UI changes -->
 
-- [ ] Visual regression tests pass (or differences approved in [Argos Dashboard](https://app.argos-ci.com))
+- [ ] Visual regression tests pass
 - [ ] Baseline screenshots updated (if intentional UI change): `npm run test:update-snapshots`
 - [ ] Responsive viewports covered (mobile / tablet / desktop)
 - [ ] i18n language variants covered (if text changes involved)
@@ -26,6 +26,6 @@
 - [ ] Visual tests pass: `npm run test:visual`
 - [ ] Manually verified in browser
 
-## Screenshots / Argos Link
+## Screenshots / Visual Notes
 
-<!-- Paste Argos build link or before/after screenshots for UI changes -->
+<!-- Paste before/after screenshots, report links, or visual investigation notes for UI changes -->
