@@ -28,4 +28,7 @@ vlm-review-report.json
 .env.*
 
 # Office temp files
-~\
+~$*
+
+# Playwright cache
+playwright/.cache/
