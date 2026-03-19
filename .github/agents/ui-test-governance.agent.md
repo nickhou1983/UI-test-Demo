@@ -27,7 +27,8 @@ Use these as the source of truth:
 
 1. [playwright-azure](../skills/playwright-azure/SKILL.md)
 2. [playwright-config](../skills/playwright-config/SKILL.md)
-3. Existing visual governance logic from [ui-test.agent.md](./ui-test.agent.md)
+3. [playwright-vlm](../skills/playwright-vlm/SKILL.md) — VLM reviewer implementation, prompts, cost controls, and reporter
+4. Existing visual governance logic from [ui-test.agent.md](./ui-test.agent.md)
 
 ## Workflow
 
@@ -55,10 +56,12 @@ Use these as the source of truth:
 
 ### VLM Review
 
-1. optional enablement only
-2. confidence threshold guidance
-3. cost controls
-4. relationship to native Playwright gating
+Refer to [playwright-vlm](../skills/playwright-vlm/SKILL.md) for implementation details. This agent owns the **policy layer**:
+
+1. optional enablement only — VLM must never be a default
+2. confidence threshold guidance — recommend safe defaults
+3. cost controls — enforce `VLM_MAX_CALLS` budget per pipeline
+4. relationship to native Playwright gating — pixel-first, VLM-fallback only
 
 ## Boundaries
 

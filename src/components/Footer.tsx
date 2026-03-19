@@ -5,11 +5,11 @@ export default function Footer() {
   const { t } = useTranslation();
 
   return (
-    <footer className="bg-blue-900 text-blue-100 py-12">
+    <footer className="bg-orange-900 text-orange-100 py-12">
       <div className="max-w-7xl mx-auto px-4 grid grid-cols-1 md:grid-cols-3 gap-8">
         <div>
           <h3 className="text-xl font-bold text-white mb-3">{t('footer.brand')}</h3>
-          <p className="text-blue-300 text-sm">{t('footer.desc')}</p>
+          <p className="text-orange-300 text-sm">{t('footer.desc')}</p>
         </div>
         <div>
           <h4 className="font-semibold text-white mb-3">{t('footer.links')}</h4>
@@ -28,7 +28,7 @@ export default function Footer() {
           </div>
         </div>
       </div>
-      <div className="max-w-7xl mx-auto px-4 mt-8 pt-6 border-t border-blue-800 text-center text-blue-400 text-sm">
+      <div className="max-w-7xl mx-auto px-4 mt-8 pt-6 border-t border-orange-800 text-center text-orange-400 text-sm">
         {t('footer.copyright')}
       </div>
     </footer>

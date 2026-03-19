@@ -1,6 +1,8 @@
 /**
  * VLM Visual Review Reporter
  *
+ * Canonical source: .github/skills/playwright-vlm/templates/utils/vlm-reporter.ts
+ *
  * Custom Playwright reporter that collects VLM review results
  * and generates a JSON report file at the end of the test run.
  */
@@ -49,6 +51,7 @@ export default class VlmReporter implements Reporter {
           pixelDiffFailed: true,
           vlmSeverity: this.extractSeverity(annotation.type),
           vlmDescription: annotation.description || '',
+          vlmAreas: this.extractAreas(annotation.description || ''),
           vlmRecommendation: this.extractRecommendation(annotation.type),
           vlmConfidence: this.extractConfidence(annotation.description || ''),
           action: this.annotationTypeToAction(annotation.type),
@@ -79,10 +82,92 @@ export default class VlmReporter implements Reporter {
     console.log(`\n[VLM Reporter] Report written to: ${reportPath}`);
 
     if (this.entries.length > 0) {
-      console.log(`[VLM Reporter] Summary: ${report.summary.passed_vlm} passed, ${report.summary.warned_vlm} warned, ${report.summary.failed} failed (${this.vlmCallCount} VLM calls)`);
+      this.printTable(report);
     } else {
       console.log(`[VLM Reporter] No VLM reviews triggered (all pixel comparisons passed or VLM disabled).`);
     }
+  }
+
+  private printTable(report: {
+    vlmCallCount: number;
+    maxCalls: number;
+    confidenceThreshold: number;
+    summary: { total: number; passed_vlm: number; warned_vlm: number; failed: number };
+    entries: VlmReportEntry[];
+  }): void {
+    const actionIcon: Record<string, string> = {
+      passed_vlm: '✅ Pass',
+      warned_vlm: '⚠️  Warn',
+      failed: '❌ Fail',
+    };
+
+    const severityLabel: Record<string, string> = {
+      cosmetic: 'Cosmetic',
+      minor: 'Minor',
+      breaking: 'Breaking',
+      uncertain: 'Uncertain',
+    };
+
+    // ── Build rows ──
+    const rows = report.entries.map((e) => ({
+      page: e.testTitle,
+      severity: severityLabel[e.vlmSeverity || ''] || e.vlmSeverity || '-',
+      confidence: e.vlmConfidence != null ? e.vlmConfidence.toFixed(2) : '-',
+      result: actionIcon[e.action] || e.action,
+      areas: (e.vlmAreas ?? []).join(', ') || this.extractAreasFromDesc(e.vlmDescription || ''),
+    }));
+
+    // ── Calculate column widths ──
+    const headers = { page: 'Page', severity: 'Severity', confidence: 'Conf.', result: 'Result', areas: 'Affected Areas' };
+    const colW = {
+      page: Math.max(headers.page.length, ...rows.map((r) => r.page.length)),
+      severity: Math.max(headers.severity.length, ...rows.map((r) => r.severity.length)),
+      confidence: Math.max(headers.confidence.length, ...rows.map((r) => r.confidence.length)),
+      result: Math.max(headers.result.length, ...rows.map((r) => this.displayWidth(r.result))),
+      areas: Math.max(headers.areas.length, ...rows.map((r) => r.areas.length)),
+    };
+
+    const pad = (s: string, w: number) => s + ' '.repeat(Math.max(0, w - this.displayWidth(s)));
+    const sep = `+-${'-'.repeat(colW.page)}-+-${'-'.repeat(colW.severity)}-+-${'-'.repeat(colW.confidence)}-+-${'-'.repeat(colW.result)}-+-${'-'.repeat(colW.areas)}-+`;
+
+    const headerLine = `| ${pad(headers.page, colW.page)} | ${pad(headers.severity, colW.severity)} | ${pad(headers.confidence, colW.confidence)} | ${pad(headers.result, colW.result)} | ${pad(headers.areas, colW.areas)} |`;
+
+    // ── Print ──
+    console.log('');
+    console.log(`  VLM Visual Regression Report  (VLM calls: ${report.vlmCallCount}/${report.maxCalls}, confidence threshold: ${report.confidenceThreshold})`);
+    console.log(sep);
+    console.log(headerLine);
+    console.log(sep);
+    for (const r of rows) {
+      console.log(`| ${pad(r.page, colW.page)} | ${pad(r.severity, colW.severity)} | ${pad(r.confidence, colW.confidence)} | ${pad(r.result, colW.result)} | ${pad(r.areas, colW.areas)} |`);
+    }
+    console.log(sep);
+
+    // Summary row
+    const { summary } = report;
+    console.log(`  Total: ${summary.total}  |  ✅ Passed: ${summary.passed_vlm}  |  ⚠️  Warned: ${summary.warned_vlm}  |  ❌ Failed: ${summary.failed}`);
+    console.log('');
+  }
+
+  /** Approximate display width — simple length for alignment */
+  private displayWidth(s: string): number {
+    return s.length;
+  }
+
+  /** Extract areas from annotation description — matches `(areas: x, y, z)` format */
+  private extractAreas(description: string): string[] {
+    const match = description.match(/\(areas:\s*([^)]+)\)/);
+    if (match) {
+      return match[1].split(',').map((s) => s.trim()).filter(Boolean);
+    }
+    return [];
+  }
+
+  /** Extract areas from VLM description when vlmAreas is not populated */
+  private extractAreasFromDesc(description: string): string {
+    const areaKeywords = ['navbar', 'hero', 'footer', 'background', 'button', 'card', 'header', 'sidebar', 'tab', 'link', 'icon', 'image', 'text', 'form'];
+    const lower = description.toLowerCase();
+    return areaKeywords.filter((k) => lower.includes(k)).join(', ') || '-';
   }
 
   private extractScreenshotName(description: string): string {

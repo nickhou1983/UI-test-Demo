@@ -47,11 +47,11 @@ export default function TripPlannerPage() {
   };
 
   return (
-    <main className="bg-sky-50 min-h-screen">
+    <main className="bg-orange-50 min-h-screen">
       {/* Hero */}
-      <section className="bg-blue-800 text-white py-12 text-center">
+      <section className="bg-orange-800 text-white py-12 text-center">
         <h1 className="text-3xl md:text-4xl font-bold mb-2">{t('trip.title')}</h1>
-        <p className="text-blue-200">{t('trip.subtitle')}</p>
+        <p className="text-orange-200">{t('trip.subtitle')}</p>
       </section>
 
       <div className="max-w-5xl mx-auto px-4 py-10">
@@ -94,7 +94,7 @@ export default function TripPlannerPage() {
                   <div className="flex gap-2">
                     <Link
                       to={`/trips/${trip.id}`}
-                      className="bg-blue-700 hover:bg-blue-800 text-white text-sm px-4 py-1.5 rounded-lg transition"
+                      className="bg-orange-700 hover:bg-orange-800 text-white text-sm px-4 py-1.5 rounded-lg transition"
                     >
                       {t('trip.editTrip')}
                     </Link>
@@ -116,7 +116,7 @@ export default function TripPlannerPage() {
       {showModal && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl shadow-xl w-full max-w-md p-6">
-            <h2 className="text-xl font-bold text-blue-800 mb-5">{t('trip.create')}</h2>
+            <h2 className="text-xl font-bold text-orange-800 mb-5">{t('trip.create')}</h2>
 
             <div className="space-y-4">
               <div>
@@ -125,7 +125,7 @@ export default function TripPlannerPage() {
                   value={formDest}
                   onChange={(e) => setFormDest(e.target.value)}
                   aria-label={t('trip.selectDest')}
-                  className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
                 >
                   <option value="">{t('trip.selectDest')}</option>
                   {destinations.map((d) => (
@@ -141,7 +141,7 @@ export default function TripPlannerPage() {
                   value={formName}
                   onChange={(e) => setFormName(e.target.value)}
                   placeholder={t('trip.namePlaceholder')}
-                  className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
                 />
               </div>
 
@@ -154,7 +154,7 @@ export default function TripPlannerPage() {
                   value={formDays}
                   onChange={(e) => setFormDays(Math.max(1, Math.min(14, Number(e.target.value))))}
                   aria-label={t('trip.days')}
-                  className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
                 />
               </div>
             </div>

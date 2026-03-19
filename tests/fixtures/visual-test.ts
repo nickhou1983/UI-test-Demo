@@ -1,6 +1,8 @@
 /**
  * VLM-Enhanced Visual Test Fixture
  *
+ * Canonical source: .github/skills/playwright-vlm/templates/fixtures/visual-test.ts
+ *
  * Extends Playwright's test fixture with a hybrid visual regression strategy:
  * 1. Run native toHaveScreenshot() pixel comparison
  * 2. If pixel diff fails AND VLM_REVIEW=true → send to Azure OpenAI GPT-4o for semantic review

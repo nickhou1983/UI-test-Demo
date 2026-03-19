@@ -170,13 +170,15 @@ This skill should hand off the following concerns instead of owning them inline:
 
 Route those concerns to:
 
-- `playwright-azure`
-- `ui-test-governance`
+- `playwright-azure` — Azure Workspace infrastructure
+- `playwright-vlm` — VLM reviewer implementation, prompts, cost controls, and reporter
+- `ui-test-governance` — CI gating policy, baseline authority, and VLM enablement decisions
 
 ## Optional Integrations
 
 If the repository already contains optional helpers such as `tests/fixtures/visual-test.ts`
 or `tests/utils/vlm-reporter.ts`, this skill may reference them as an extension path.
+See [playwright-vlm](../playwright-vlm/SKILL.md) for the full VLM integration guide and portable templates.
 
 Do not make VLM the default or required generation path.
 

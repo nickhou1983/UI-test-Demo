@@ -1,6 +1,8 @@
 /**
  * VLM Visual Regression Review — Prompt Templates
  *
+ * Canonical source: .github/skills/playwright-vlm/templates/utils/vlm-prompts.ts
+ *
  * Provides system and user prompts for Azure OpenAI GPT-4o vision
  * to perform semantic-level visual diff review.
  */

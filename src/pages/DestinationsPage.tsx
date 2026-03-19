@@ -31,11 +31,11 @@ export default function DestinationsPage() {
   }, [keyword, region, type, sortBy, t]);
 
   return (
-    <main className="bg-sky-50 min-h-screen">
+    <main className="bg-orange-50 min-h-screen">
       {/* Page header */}
-      <section className="bg-blue-800 text-white py-12 text-center">
+      <section className="bg-orange-800 text-white py-12 text-center">
         <h1 className="text-3xl md:text-4xl font-bold mb-2">{t('destinations.title')}</h1>
-        <p className="text-blue-200">{t('destinations.subtitle')}</p>
+        <p className="text-orange-200">{t('destinations.subtitle')}</p>
       </section>
 
       <div className="max-w-7xl mx-auto px-4 py-8">

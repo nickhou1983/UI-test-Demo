@@ -1,6 +1,8 @@
 /**
  * VLM Visual Regression Reviewer
  *
+ * Canonical source: .github/skills/playwright-vlm/templates/utils/vlm-reviewer.ts
+ *
  * Sends baseline + actual screenshots to Azure OpenAI GPT-4o vision
  * for semantic-level visual diff analysis. Used as a "smart noise filter"
  * when pixel-level comparison fails.

@@ -44,6 +44,7 @@ Only do these when they materially improve the requested test generation:
 2. Locator strategy mapping.
 3. Journey map construction.
 4. Deep type resolution for component props.
+5. Side-effect analysis — scan source code and runtime DOM for operations that trigger browser dialogs (`window.confirm`, `window.alert`, `window.prompt`), open new tabs (`target="_blank"`, `window.open`), navigate to external URLs (`mailto:`, `tel:`, absolute `http(s)` links), or initiate downloads (`download` attribute). Record each finding with its file, line number, and category.
 
 ## Outputs
 
@@ -55,6 +56,13 @@ Produce only the outputs that downstream agents need:
 4. Locator Strategy Notes
 5. Journey Notes
 6. Environment Readiness Notes
+7. Side-Effect Inventory — a table of detected side-effect operations grouped by category:
+   - **Dialogs**: `window.confirm()`, `window.alert()`, `window.prompt()` — include source file, line, and triggering user action.
+   - **New Tabs**: `target="_blank"`, `window.open()` — include the element or code path.
+   - **External Navigation**: `mailto:`, `tel:`, absolute `http(s)` links that leave the SPA — include href and element.
+   - **Downloads**: elements with `download` attribute — include filename pattern if deterministic.
+   
+   For each entry, also provide a recommended test handling pattern (e.g., `page.on('dialog', d => d.accept())` for confirm dialogs).
 
 ## Handoff Rules
 
@@ -74,6 +82,7 @@ Prioritize:
 3. interactive flows
 4. locator guidance
 5. user journeys
+6. side-effect handling — pass dialog types and recommended handlers so E2E tests can register `page.on('dialog')` or `context.on('page')` listeners before triggering the action
 
 ### For `ui-test-visual`
 
@@ -82,6 +91,7 @@ Prioritize:
 2. i18n variants
 3. responsive candidates
 4. baseline target pages
+5. side-effect warnings — flag pages that may show browser dialogs during navigation or interaction so visual tests can dismiss them before taking screenshots
 
 ## Do Not Do
 

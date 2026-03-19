@@ -36,7 +36,7 @@ export default function Carousel({ items, autoPlayInterval = 4000 }: Props) {
             onClick={() => goTo(i)}
             aria-label={`Slide ${i + 1}`}
             className={`w-3 h-3 rounded-full transition ${
-              i === current ? 'bg-blue-800' : 'bg-blue-300'
+              i === current ? 'bg-orange-800' : 'bg-orange-300'
             }`}
           />
         ))}

@@ -29,10 +29,10 @@ export default function TripEditPage() {
 
   if (!trip) {
     return (
-      <main className="bg-sky-50 min-h-screen flex items-center justify-center">
+      <main className="bg-orange-50 min-h-screen flex items-center justify-center">
         <div className="text-center">
           <p className="text-2xl text-slate-400 mb-4">{t('detail.notFound')}</p>
-          <Link to="/trips" className="bg-blue-700 text-white px-6 py-2 rounded-full hover:bg-blue-800 transition">
+          <Link to="/trips" className="bg-orange-700 text-white px-6 py-2 rounded-full hover:bg-orange-800 transition">
             {t('trip.backToList')}
           </Link>
         </div>
@@ -86,21 +86,21 @@ export default function TripEditPage() {
   };
 
   return (
-    <main className="bg-sky-50 min-h-screen">
+    <main className="bg-orange-50 min-h-screen">
       {/* Header */}
-      <section className="bg-blue-800 text-white py-8">
+      <section className="bg-orange-800 text-white py-8">
         <div className="max-w-6xl mx-auto px-4">
-          <Link to="/trips" className="text-blue-200 hover:text-white text-sm mb-3 inline-block">
+          <Link to="/trips" className="text-orange-200 hover:text-white text-sm mb-3 inline-block">
             ← {t('trip.backToList')}
           </Link>
           <input
             type="text"
             value={trip.name}
             onChange={(e) => handleNameChange(e.target.value)}
-            className="block text-2xl md:text-3xl font-bold bg-transparent border-b border-blue-600 focus:border-emerald-400 outline-none w-full max-w-lg pb-1"
+            className="block text-2xl md:text-3xl font-bold bg-transparent border-b border-orange-600 focus:border-emerald-400 outline-none w-full max-w-lg pb-1"
             aria-label={t('trip.name')}
           />
-          <p className="text-blue-200 mt-2">
+          <p className="text-orange-200 mt-2">
             📍 {dest ? t(dest.nameKey) : trip.destinationId} · {t('trip.daysCount', { n: trip.days.length })}
           </p>
         </div>
@@ -118,8 +118,8 @@ export default function TripEditPage() {
                   onClick={() => { setActiveDay(day.dayNumber); setShowAddForm(false); }}
                   className={`px-4 py-2 rounded-lg text-sm font-medium transition ${
                     activeDay === day.dayNumber
-                      ? 'bg-blue-700 text-white'
-                      : 'bg-white text-slate-600 hover:bg-blue-50 shadow-sm'
+                      ? 'bg-orange-700 text-white'
+                      : 'bg-white text-slate-600 hover:bg-orange-50 shadow-sm'
                   }`}
                 >
                   {t('trip.day', { n: day.dayNumber })}
@@ -129,7 +129,7 @@ export default function TripEditPage() {
 
             {/* Activities */}
             <div className="bg-white rounded-xl shadow-md p-6">
-              <h2 className="text-lg font-bold text-blue-800 mb-4">
+              <h2 className="text-lg font-bold text-orange-800 mb-4">
                 {t('trip.day', { n: activeDay })}
               </h2>
 
@@ -142,9 +142,9 @@ export default function TripEditPage() {
                   {currentDay.activities.map((activity, idx) => (
                     <div
                       key={activity.id}
-                      className="flex items-start gap-3 p-3 bg-sky-50 rounded-lg group"
+                      className="flex items-start gap-3 p-3 bg-orange-50 rounded-lg group"
                     >
-                      <span className="w-6 h-6 bg-blue-700 text-white text-xs rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                      <span className="w-6 h-6 bg-orange-700 text-white text-xs rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
                         {idx + 1}
                       </span>
                       <div className="flex-1 min-w-0">
@@ -194,7 +194,7 @@ export default function TripEditPage() {
                     value={activityName}
                     onChange={(e) => setActivityName(e.target.value)}
                     placeholder={t('trip.activityName')}
-                    className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
                   />
                   <div className="grid grid-cols-2 gap-3">
                     <input
@@ -202,14 +202,14 @@ export default function TripEditPage() {
                       value={activityTime}
                       onChange={(e) => setActivityTime(e.target.value)}
                       placeholder={t('trip.activityTime')}
-                      className="border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
                     />
                     <input
                       type="text"
                       value={activityNotes}
                       onChange={(e) => setActivityNotes(e.target.value)}
                       placeholder={t('trip.activityNotes')}
-                      className="border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
                     />
                   </div>
                   <div className="flex gap-2">
@@ -231,7 +231,7 @@ export default function TripEditPage() {
               ) : (
                 <button
                   onClick={() => setShowAddForm(true)}
-                  className="w-full border-2 border-dashed border-slate-300 hover:border-blue-400 text-slate-400 hover:text-blue-500 py-3 rounded-lg text-sm transition"
+                  className="w-full border-2 border-dashed border-slate-300 hover:border-orange-400 text-slate-400 hover:text-orange-500 py-3 rounded-lg text-sm transition"
                 >
                   + {t('trip.addActivity')}
                 </button>
@@ -246,7 +246,7 @@ export default function TripEditPage() {
               <div className="bg-white rounded-xl shadow-md overflow-hidden">
                 <img src={dest.image} alt={t(dest.nameKey)} className="w-full h-36 object-cover" />
                 <div className="p-4">
-                  <h3 className="font-bold text-blue-800">{t(dest.nameKey)}</h3>
+                  <h3 className="font-bold text-orange-800">{t(dest.nameKey)}</h3>
                   <p className="text-sm text-slate-500">{t(dest.countryKey)}</p>
                 </div>
               </div>

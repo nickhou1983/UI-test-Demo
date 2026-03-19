@@ -30,7 +30,7 @@ export default function DestinationCard({ destination }: Props) {
         <span className="text-xs bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full">
           {t(`filter.${destination.type}`)}
         </span>
-        <h3 className="font-bold text-lg text-blue-800 mt-2">{t(destination.nameKey)}</h3>
+        <h3 className="font-bold text-lg text-orange-800 mt-2">{t(destination.nameKey)}</h3>
         <p className="text-sm text-emerald-600 mb-1">{t(destination.countryKey)}</p>
         <p className="text-slate-500 text-sm line-clamp-2">{t(destination.descKey)}</p>
         <div className="mt-2 flex items-center space-x-1 text-sm">

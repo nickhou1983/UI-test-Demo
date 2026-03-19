@@ -1,4 +1,8 @@
+import { existsSync } from 'fs';
 import { defineConfig, devices, type ReporterDescription } from '@playwright/test';
+
+// Load .env so VLM credentials (AZURE_OPENAI_ENDPOINT, etc.) are available
+if (existsSync('.env')) process.loadEnvFile('.env');
 
 const reporter: ReporterDescription[] = [['html', { open: 'never' }]];
 

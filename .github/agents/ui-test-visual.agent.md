@@ -31,9 +31,10 @@ Before generating tests, ensure you have enough discovery context for:
 
 If these are missing, invoke `ui-test-discovery` first.
 
-## Primary Skill
+## Primary Skills
 
-Use [playwright-visual](../skills/playwright-visual/SKILL.md) as the implementation guide.
+- [playwright-visual](../skills/playwright-visual/SKILL.md) — core screenshot workflow and pixel comparison
+- [playwright-vlm](../skills/playwright-vlm/SKILL.md) — VLM-enhanced review (optional, only when explicitly requested)
 
 ## Default Mode
 
@@ -53,7 +54,7 @@ Escalate to `ui-test-governance` only when the user explicitly asks for:
 
 1. Azure Playwright Workspace execution
 2. PR visual gating
-3. VLM review
+3. VLM review enablement policy (use `playwright-vlm` skill for implementation details)
 4. baseline authority policy
 5. CI artifact / portal guidance
 

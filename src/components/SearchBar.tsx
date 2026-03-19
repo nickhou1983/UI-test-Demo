@@ -24,7 +24,7 @@ export default function SearchBar({ value, onChange, placeholder }: Props) {
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder ?? t('hero.search')}
-        className="search-input w-full pl-10 pr-4 py-3 rounded-full border border-slate-200 focus:border-blue-500 focus:outline-none text-slate-700 bg-white"
+        className="search-input w-full pl-10 pr-4 py-3 rounded-full border border-slate-200 focus:border-orange-500 focus:outline-none text-slate-700 bg-white"
       />
     </div>
   );

@@ -1,10 +1,7 @@
 import { defineConfig, type ReporterDescription } from '@playwright/test';
 import { createAzurePlaywrightConfig, ServiceOS } from '@azure/playwright';
 import { DefaultAzureCredential } from '@azure/identity';
-import { existsSync } from 'fs';
 import baseConfig from './playwright.config';
-
-if (existsSync('.env')) process.loadEnvFile('.env');
 
 const reporter: ReporterDescription[] = [
   ['list'],

@@ -25,7 +25,7 @@ export default function HomePage() {
   const reviewSlides = reviews.map((r) => (
     <div key={r.authorKey} className="bg-white rounded-xl shadow-md p-8 text-center">
       <p className="text-slate-600 italic mb-4">"{t(r.quoteKey)}"</p>
-      <p className="font-bold text-blue-800">{t(r.authorKey)}</p>
+      <p className="font-bold text-orange-800">{t(r.authorKey)}</p>
       <p className="text-sm text-slate-400">{t(r.roleKey)}</p>
     </div>
   ));
@@ -42,7 +42,7 @@ export default function HomePage() {
         <div className="hero-overlay absolute inset-0" />
         <div className="relative z-10 text-center text-white px-4 max-w-3xl">
           <h1 className="text-4xl md:text-5xl font-bold mb-4">{t('hero.title')}</h1>
-          <p className="text-lg md:text-xl mb-8 text-blue-100">{t('hero.subtitle')}</p>
+          <p className="text-lg md:text-xl mb-8 text-orange-100">{t('hero.subtitle')}</p>
           <div className="max-w-xl mx-auto">
             <SearchBar value={search} onChange={setSearch} />
           </div>
@@ -51,7 +51,7 @@ export default function HomePage() {
 
       {/* Popular Destinations */}
       <section className="max-w-7xl mx-auto px-4 py-16">
-        <h2 className="text-3xl md:text-4xl font-bold text-blue-800 text-center mb-2">{t('home.popular')}</h2>
+        <h2 className="text-3xl md:text-4xl font-bold text-orange-800 text-center mb-2">{t('home.popular')}</h2>
         <p className="text-slate-500 text-center mb-10">{t('home.popular.subtitle')}</p>
 
         {filtered.length > 0 ? (
@@ -67,7 +67,7 @@ export default function HomePage() {
         <div className="text-center mt-10">
           <Link
             to="/destinations"
-            className="inline-block bg-blue-700 hover:bg-blue-800 text-white px-8 py-3 rounded-full transition"
+            className="inline-block bg-orange-700 hover:bg-orange-800 text-white px-8 py-3 rounded-full transition"
           >
             {t('home.viewAll')}
           </Link>
@@ -77,7 +77,7 @@ export default function HomePage() {
       {/* Travel Themes */}
       <section className="bg-white py-16">
         <div className="max-w-7xl mx-auto px-4">
-          <h2 className="text-3xl md:text-4xl font-bold text-blue-800 text-center mb-2">{t('home.themes')}</h2>
+          <h2 className="text-3xl md:text-4xl font-bold text-orange-800 text-center mb-2">{t('home.themes')}</h2>
           <p className="text-slate-500 text-center mb-10">{t('home.themes.subtitle')}</p>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
             {categories.map((cat) => (
@@ -104,7 +104,7 @@ export default function HomePage() {
 
       {/* Reviews */}
       <section className="max-w-4xl mx-auto px-4 py-16">
-        <h2 className="text-3xl md:text-4xl font-bold text-blue-800 text-center mb-2">{t('home.reviews')}</h2>
+        <h2 className="text-3xl md:text-4xl font-bold text-orange-800 text-center mb-2">{t('home.reviews')}</h2>
         <p className="text-slate-500 text-center mb-10">{t('home.reviews.subtitle')}</p>
         <Carousel items={reviewSlides} />
       </section>
