@@ -1,17 +1,13 @@
 /**
  * VLM-Enhanced Visual Test Fixture
  *
- * Canonical source for the playwright-vlm skill.
- * Copy to: tests/fixtures/visual-test.ts
+ * Canonical source: .github/skills/playwright-vlm/templates/fixtures/visual-test.ts
  *
  * Extends Playwright's test fixture with a hybrid visual regression strategy:
  * 1. Run native toHaveScreenshot() pixel comparison
  * 2. If pixel diff fails AND VLM_REVIEW=true → send to Azure OpenAI GPT-4o for semantic review
  * 3. VLM judges cosmetic (confidence ≥ 0.7) → WARN, test passes with annotation
  * 4. VLM judges breaking OR low confidence → test fails as usual
- *
- * NOTE: After copying to your project, verify the import path below points to
- * your installed vlm-reviewer.ts location (default: ../utils/vlm-reviewer).
  */
 
 import { test as base, expect, type Page, type Locator } from '@playwright/test';
@@ -149,6 +145,15 @@ export const test = base.extend<{
         // Step 4: Call VLM for semantic review
         console.log(`[VLM] Pixel diff failed for "${name}". Sending to Azure OpenAI GPT-4o for semantic review...`);
 
+        // Attach baseline and actual screenshots to Playwright HTML report
+        await testInfo.attach('vlm-baseline-' + name, { path: baselinePath, contentType: 'image/png' });
+        await testInfo.attach('vlm-actual-' + name, { path: actualPath, contentType: 'image/png' });
+        const diffName = basename(name, '.png') + '-diff.png';
+        const diffPath = join(testInfo.outputDir, diffName);
+        if (existsSync(diffPath)) {
+          await testInfo.attach('vlm-diff-' + name, { path: diffPath, contentType: 'image/png' });
+        }
+
         let vlmResult: VlmReviewResult;
         try {
           vlmResult = await reviewVisualDiff(baselinePath, actualPath, {
@@ -184,7 +189,7 @@ export const test = base.extend<{
           });
           testInfo.annotations.push({
             type: 'vlm-low-confidence',
-            description: `VLM confidence ${vlmResult.confidence} < threshold ${CONFIDENCE_THRESHOLD}: ${vlmResult.description}`,
+            description: `[VLM uncertain] VLM confidence ${vlmResult.confidence} < threshold ${CONFIDENCE_THRESHOLD}: ${vlmResult.description} (areas: ${vlmResult.areas.join(', ') || 'unknown'}) (changedProperties: ${vlmResult.changedProperties.join(', ') || 'unknown'}) (confidence: ${vlmResult.confidence})`,
           });
           throw pixelError;
         }
@@ -201,7 +206,7 @@ export const test = base.extend<{
           });
           testInfo.annotations.push({
             type: 'vlm-override',
-            description: `[VLM ${vlmResult.severity}] ${vlmResult.description} (confidence: ${vlmResult.confidence})`,
+            description: `[VLM ${vlmResult.severity}] ${vlmResult.description} (areas: ${vlmResult.areas.join(', ') || 'none'}) (changedProperties: ${vlmResult.changedProperties.join(', ') || 'none'}) (confidence: ${vlmResult.confidence})`,
           });
           console.log(`[VLM] ✅ Pixel diff overridden — VLM classified as "${vlmResult.severity}". Test passes with annotation.`);
           return; // Test passes
@@ -218,7 +223,7 @@ export const test = base.extend<{
           });
           testInfo.annotations.push({
             type: 'vlm-warning',
-            description: `[VLM minor] ${vlmResult.description} (confidence: ${vlmResult.confidence})`,
+            description: `[VLM minor] ${vlmResult.description} (areas: ${vlmResult.areas.join(', ') || 'none'}) (changedProperties: ${vlmResult.changedProperties.join(', ') || 'none'}) (confidence: ${vlmResult.confidence})`,
           });
           console.log(`[VLM] ⚠️ VLM classified as "minor". Test passes with warning.`);
           return; // Test passes with warning
@@ -234,7 +239,7 @@ export const test = base.extend<{
         });
         testInfo.annotations.push({
           type: 'vlm-breaking',
-          description: `[VLM breaking] ${vlmResult.description} (areas: ${vlmResult.areas.join(', ')})`,
+          description: `[VLM breaking] ${vlmResult.description} (areas: ${vlmResult.areas.join(', ') || 'none'}) (changedProperties: ${vlmResult.changedProperties.join(', ') || 'none'}) (confidence: ${vlmResult.confidence})`,
         });
         throw pixelError; // Re-throw — this is a real regression
       }

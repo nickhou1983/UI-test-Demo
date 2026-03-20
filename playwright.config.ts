@@ -8,6 +8,7 @@ const reporter: ReporterDescription[] = [['html', { open: 'never' }]];
 
 if (process.env.VLM_REVIEW === 'true') {
   reporter.push(['./tests/utils/vlm-reporter.ts']);
+  reporter.push(['./tests/utils/vlm-html-reporter.ts']);
 }
 
 export default defineConfig({

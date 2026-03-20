@@ -43,11 +43,12 @@ This skill ships with ready-to-install templates in the `templates/` subdirector
 ```
 templates/
 ├── utils/
-│   ├── vlm-prompts.ts       # System & user prompt for GPT-4o vision
-│   ├── vlm-reviewer.ts      # Core review logic + Azure OpenAI client
-│   └── vlm-reporter.ts      # Playwright custom reporter → JSON report
+│   ├── vlm-prompts.ts         # System & user prompt for GPT-4o vision
+│   ├── vlm-reviewer.ts        # Core review logic + Azure OpenAI client
+│   ├── vlm-reporter.ts        # Playwright custom reporter → JSON + ANSI console
+│   └── vlm-html-reporter.ts   # Standalone HTML visual report with screenshots
 └── fixtures/
-    └── visual-test.ts        # Hybrid pixel-first / VLM-fallback fixture
+    └── visual-test.ts          # Hybrid pixel-first / VLM-fallback fixture
 ```
 
 To install in a new project, see the **Setup** section below.
@@ -112,6 +113,7 @@ The native Playwright `toHaveScreenshot()` always runs first. VLM is only invoke
 | `AZURE_OPENAI_ENDPOINT` | — | Azure OpenAI resource endpoint (required) |
 | `AZURE_OPENAI_API_KEY` | — | API key (if not using Entra ID) |
 | `AZURE_OPENAI_DEPLOYMENT` | `gpt-4o` | Model deployment name |
+| `VLM_REPORT_INLINE` | `false` | Embed base64 images in HTML report (`true` / `false`) |
 
 ## Severity Levels
 
@@ -179,6 +181,7 @@ const reporter: ReporterDescription[] = [['html', { open: 'never' }]];
 
 if (process.env.VLM_REVIEW === 'true') {
   reporter.push(['./tests/utils/vlm-reporter.ts']);
+  reporter.push(['./tests/utils/vlm-html-reporter.ts']);
 }
 
 export default defineConfig({
@@ -189,7 +192,12 @@ export default defineConfig({
 
 ## Report Output
 
-The reporter generates `vlm-review-report.json` at the project root:
+The reporters produce two output files:
+
+- `vlm-review-report.json` — machine-readable JSON with aggregation and pattern detection
+- `vlm-visual-report.html` — standalone HTML dashboard with screenshot side-by-side cards
+
+### JSON Report
 
 ```json
 {
@@ -214,12 +222,50 @@ The reporter generates `vlm-review-report.json` at the project root:
       "vlmSeverity": "cosmetic",
       "vlmDescription": "Subtle font rendering variation in navbar",
       "vlmAreas": ["navbar"],
+      "vlmChangedProperties": ["color"],
       "vlmRecommendation": "pass",
       "vlmConfidence": 0.95,
-      "action": "passed_vlm"
+      "action": "passed_vlm",
+      "baselinePath": "test-results/.../baseline.png",
+      "actualPath": "test-results/.../actual.png",
+      "diffPath": "test-results/.../diff.png"
     }
-  ]
+  ],
+  "patterns": [
+    {
+      "type": "global-property",
+      "label": "color",
+      "affectedCount": 6,
+      "totalCount": 8,
+      "percentage": 75,
+      "details": "\"color\" change detected across 6/8 pages (75%)"
+    }
+  ],
+  "aggregation": {
+    "bySeverity": { "cosmetic": 2, "minor": 1 },
+    "byArea": { "navbar": 3, "hero": 1 },
+    "byProperty": { "color": 6, "typography": 1 },
+    "byPage": {}
+  }
 }
+```
+
+### HTML Report
+
+The HTML report (`vlm-visual-report.html`) features:
+- **Dashboard**: severity distribution cards + detected cross-page patterns
+- **Entry cards**: baseline / actual screenshots side-by-side with severity badge, confidence progress bar, areas and changedProperties tags
+- **Image modes**: external `file://` refs by default (smaller HTML); set `VLM_REPORT_INLINE=true` for base64 inline (portable)
+
+### Playwright HTML Reporter Integration
+
+Screenshots are also attached via `testInfo.attach()`, making them visible inside Playwright's built-in HTML reporter per-test view.
+
+### ANSI Terminal Output
+
+The console table output is now color-coded:
+- **Breaking** → red, **Minor** → yellow, **Cosmetic** → green
+- Cross-page pattern detection summary at the bottom
 ```
 
 ## Prompt Engineering
@@ -228,7 +274,7 @@ The system prompt (in `templates/utils/vlm-prompts.ts`) instructs GPT-4o to:
 
 1. Compare BASELINE and ACTUAL screenshots side by side
 2. Classify differences into exactly one severity level
-3. Return a structured JSON verdict with `severity`, `description`, `areas`, `recommendation`, `confidence`
+3. Return a structured JSON verdict with `severity`, `description`, `areas`, `changedProperties`, `recommendation`, `confidence`
 4. Focus on what a human tester would notice at normal viewing distance
 5. Ignore OS/browser rendering engine variations
 
@@ -272,8 +318,9 @@ Follow these steps to add VLM review to any Playwright project:
 # From .github/skills/playwright-vlm/templates/
 cp templates/utils/vlm-prompts.ts   <project>/tests/utils/vlm-prompts.ts
 cp templates/utils/vlm-reviewer.ts  <project>/tests/utils/vlm-reviewer.ts
-cp templates/utils/vlm-reporter.ts  <project>/tests/utils/vlm-reporter.ts
-cp templates/fixtures/visual-test.ts <project>/tests/fixtures/visual-test.ts
+cp templates/utils/vlm-reporter.ts       <project>/tests/utils/vlm-reporter.ts
+cp templates/utils/vlm-html-reporter.ts  <project>/tests/utils/vlm-html-reporter.ts
+cp templates/fixtures/visual-test.ts     <project>/tests/fixtures/visual-test.ts
 ```
 
 ### 2. Install npm Dependencies
@@ -291,6 +338,7 @@ const reporter: ReporterDescription[] = [['html', { open: 'never' }]];
 
 if (process.env.VLM_REVIEW === 'true') {
   reporter.push(['./tests/utils/vlm-reporter.ts']);
+  reporter.push(['./tests/utils/vlm-html-reporter.ts']);
 }
 ```
 
@@ -320,6 +368,7 @@ AZURE_OPENAI_DEPLOYMENT=gpt-4o
 
 ```
 vlm-review-report.json
+vlm-visual-report.html
 ```
 
 ## Cost Controls
@@ -353,5 +402,5 @@ This skill is complete when:
 1. VLM templates are installed in the target project's `tests/` directory
 2. Environment variables are configured with valid Azure OpenAI credentials
 3. The VLM reporter is conditionally loaded in `playwright.config.ts`
-4. Running `VLM_REVIEW=true npx playwright test --project=visual` produces a `vlm-review-report.json`
+4. Running `VLM_REVIEW=true npx playwright test --project=visual` produces `vlm-review-report.json` and `vlm-visual-report.html`
 5. Pixel-passing tests do not invoke VLM (zero API cost for green runs)

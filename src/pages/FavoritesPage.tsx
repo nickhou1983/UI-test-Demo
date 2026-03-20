@@ -18,8 +18,8 @@ export default function FavoritesPage() {
   const favoriteDests = destinations.filter((d) => favoriteIds.includes(d.id));
 
   return (
-    <main className="bg-orange-50 min-h-screen">
-      <section className="bg-orange-800 text-white py-12 text-center">
+    <main className="bg-slate-50 min-h-screen">
+      <section className="bg-slate-900 text-white py-12 text-center">
         <h1 className="text-3xl md:text-4xl font-bold mb-2">{t('favorites.title')}</h1>
       </section>
 
@@ -35,7 +35,7 @@ export default function FavoritesPage() {
             <p className="text-2xl text-slate-400 mb-6">{t('favorites.empty')}</p>
             <Link
               to="/destinations"
-              className="bg-orange-700 hover:bg-orange-800 text-white px-8 py-3 rounded-lg transition inline-block"
+              className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-lg transition inline-block"
             >
               {t('favorites.explore')}
             </Link>

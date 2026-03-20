@@ -12,10 +12,10 @@ export default function DestinationDetailPage() {
 
   if (!detail) {
     return (
-      <main className="bg-orange-50 min-h-screen flex items-center justify-center">
+      <main className="bg-slate-50 min-h-screen flex items-center justify-center">
         <div className="text-center">
           <p className="text-2xl text-slate-400 mb-4">{t('detail.notFound')}</p>
-          <Link to="/destinations" className="bg-orange-700 text-white px-6 py-2 rounded-full hover:bg-orange-800 transition">
+          <Link to="/destinations" className="bg-blue-600 text-white px-6 py-2 rounded-full hover:bg-blue-700 transition">
             {t('detail.backToList')}
           </Link>
         </div>
@@ -28,15 +28,15 @@ export default function DestinationDetailPage() {
     .filter(Boolean);
 
   return (
-    <main className="bg-orange-50 min-h-screen">
+    <main className="bg-slate-50 min-h-screen">
       {/* Breadcrumb */}
       <div className="max-w-7xl mx-auto px-4 py-4">
         <nav className="text-sm text-slate-500">
-          <Link to="/" className="hover:text-orange-600">{t('detail.breadcrumb.home')}</Link>
+          <Link to="/" className="hover:text-blue-500">{t('detail.breadcrumb.home')}</Link>
           <span className="mx-2">/</span>
-          <Link to="/destinations" className="hover:text-orange-600">{t('detail.breadcrumb.destinations')}</Link>
+          <Link to="/destinations" className="hover:text-blue-500">{t('detail.breadcrumb.destinations')}</Link>
           <span className="mx-2">/</span>
-          <span className="text-orange-800 font-medium">{t(detail.nameKey)}</span>
+          <span className="text-blue-600 font-medium">{t(detail.nameKey)}</span>
         </nav>
       </div>
 
@@ -62,20 +62,20 @@ export default function DestinationDetailPage() {
           {/* Main */}
           <div className="lg:col-span-2">
             <div className="flex items-center gap-3 mb-2">
-              <h1 className="text-3xl md:text-4xl font-bold text-orange-800">{t(detail.nameKey)}</h1>
+              <h1 className="text-3xl md:text-4xl font-bold text-blue-600">{t(detail.nameKey)}</h1>
               <FavoriteButton destinationId={detail.id} className="mt-1" />
             </div>
-            <p className="text-emerald-600 text-lg mb-6">📍 {t(detail.countryKey)}</p>
+            <p className="text-cyan-600 text-lg mb-6">📍 {t(detail.countryKey)}</p>
             <p className="text-slate-600 leading-relaxed mb-10">{t(detail.descKey)}</p>
 
             {/* Attractions */}
-            <h2 className="text-2xl font-bold text-orange-800 mb-6">{t('detail.attractions')}</h2>
+            <h2 className="text-2xl font-bold text-blue-600 mb-6">{t('detail.attractions')}</h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-10">
               {detail.attractions.map((attr) => (
                 <div key={attr.nameKey} className="bg-white rounded-xl shadow-md overflow-hidden">
                   <img src={attr.image} alt={t(attr.nameKey)} className="w-full h-40 object-cover" loading="lazy" />
                   <div className="p-4">
-                    <h3 className="font-bold text-orange-800 mb-1">{t(attr.nameKey)}</h3>
+                    <h3 className="font-bold text-blue-600 mb-1">{t(attr.nameKey)}</h3>
                     <p className="text-slate-500 text-sm">{t(attr.descKey)}</p>
                   </div>
                 </div>
@@ -85,12 +85,12 @@ export default function DestinationDetailPage() {
             {/* Reviews */}
             {detail.reviews && detail.reviews.length > 0 && (
               <>
-                <h2 className="text-2xl font-bold text-orange-800 mb-6">{t('detail.reviews')}</h2>
+                <h2 className="text-2xl font-bold text-blue-600 mb-6">{t('detail.reviews')}</h2>
                 <div className="space-y-4 mb-10">
                   {detail.reviews.map((review) => (
                     <div key={review.contentKey} className="bg-white rounded-xl shadow-md p-5">
                       <div className="flex items-center justify-between mb-2">
-                        <span className="font-bold text-orange-800">{t(review.authorKey)}</span>
+                        <span className="font-bold text-blue-600">{t(review.authorKey)}</span>
                         <span className="text-slate-400 text-sm">{t(review.dateKey)}</span>
                       </div>
                       <div className="flex items-center space-x-1 text-sm mb-2">
@@ -110,7 +110,7 @@ export default function DestinationDetailPage() {
           <div className="space-y-6">
             {/* Overview */}
             <div className="bg-white rounded-xl shadow-md p-6">
-              <h3 className="font-bold text-orange-800 text-lg mb-4">{t('detail.overview')}</h3>
+              <h3 className="font-bold text-blue-600 text-lg mb-4">{t('detail.overview')}</h3>
               <div className="space-y-3 text-sm">
                 <div className="flex justify-between">
                   <span className="text-slate-500">🗓️ {t('detail.season')}</span>
@@ -132,7 +132,7 @@ export default function DestinationDetailPage() {
 
             {/* Practical info */}
             <div className="bg-white rounded-xl shadow-md p-6">
-              <h3 className="font-bold text-orange-800 text-lg mb-4">{t('detail.practical')}</h3>
+              <h3 className="font-bold text-blue-600 text-lg mb-4">{t('detail.practical')}</h3>
               <div className="space-y-3 text-sm">
                 <div><span className="text-slate-500">✈️ {t('detail.transport')}：</span><span className="text-slate-700">{t(detail.transport)}</span></div>
                 <div><span className="text-slate-500">📋 {t('detail.visa')}：</span><span className="text-slate-700">{t(detail.visa)}</span></div>
@@ -144,14 +144,14 @@ export default function DestinationDetailPage() {
 
             <Link
               to={`/trips?dest=${detail.id}`}
-              className="block text-center bg-orange-700 hover:bg-orange-800 text-white py-3 rounded-lg transition"
+              className="block text-center bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-lg transition"
             >
               📋 {t('trip.planTrip')}
             </Link>
 
             <Link
               to="/destinations"
-              className="block text-center bg-emerald-600 hover:bg-emerald-700 text-white py-3 rounded-lg transition"
+              className="block text-center bg-cyan-600 hover:bg-cyan-700 text-white py-3 rounded-lg transition"
             >
               {t('detail.backToList')}
             </Link>
@@ -161,7 +161,7 @@ export default function DestinationDetailPage() {
         {/* Related */}
         {relatedDests.length > 0 && (
           <section className="mt-16">
-            <h2 className="text-2xl font-bold text-orange-800 mb-6">{t('detail.related')}</h2>
+            <h2 className="text-2xl font-bold text-blue-600 mb-6">{t('detail.related')}</h2>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
               {relatedDests.map((d) => d && <DestinationCard key={d.id} destination={d} />)}
             </div>

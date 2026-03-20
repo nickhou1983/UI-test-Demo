@@ -27,7 +27,7 @@ export default function FilterBar({ keyword, region, type, sortBy, onKeywordChan
         value={region}
         onChange={(e) => onRegionChange(e.target.value)}
         aria-label={t('destinations.region')}
-        className="px-4 py-3 rounded-lg border border-slate-200 bg-white text-slate-700 focus:border-orange-500 focus:outline-none"
+        className="px-4 py-3 rounded-lg border border-slate-200 bg-white text-slate-700 focus:border-blue-500 focus:outline-none"
       >
         <option value="">{t('destinations.region')}</option>
         {regions.map((r) => (
@@ -38,7 +38,7 @@ export default function FilterBar({ keyword, region, type, sortBy, onKeywordChan
         value={type}
         onChange={(e) => onTypeChange(e.target.value)}
         aria-label={t('destinations.type')}
-        className="px-4 py-3 rounded-lg border border-slate-200 bg-white text-slate-700 focus:border-orange-500 focus:outline-none"
+        className="px-4 py-3 rounded-lg border border-slate-200 bg-white text-slate-700 focus:border-blue-500 focus:outline-none"
       >
         <option value="">{t('destinations.type')}</option>
         {types.map((tp) => (
@@ -49,7 +49,7 @@ export default function FilterBar({ keyword, region, type, sortBy, onKeywordChan
         value={sortBy}
         onChange={(e) => onSortChange(e.target.value)}
         aria-label={t('destinations.sort')}
-        className="px-4 py-3 rounded-lg border border-slate-200 bg-white text-slate-700 focus:border-orange-500 focus:outline-none"
+        className="px-4 py-3 rounded-lg border border-slate-200 bg-white text-slate-700 focus:border-blue-500 focus:outline-none"
       >
         <option value="">{t('destinations.sort.default')}</option>
         <option value="rating">{t('destinations.sort.rating')}</option>

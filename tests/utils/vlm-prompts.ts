@@ -53,9 +53,21 @@ Respond with ONLY a valid JSON object (no markdown, no code fence). The JSON mus
   "severity": "none" | "cosmetic" | "minor" | "breaking",
   "description": "Concise description of the visual differences found",
   "areas": ["list", "of", "affected", "UI", "areas"],
+  "changedProperties": ["list", "of", "changed", "CSS/visual", "property", "categories"],
   "recommendation": "pass" | "warn" | "fail",
   "confidence": 0.0 to 1.0
 }
+
+### changedProperties values
+Use one or more of these categories to describe WHAT type of visual property changed:
+- "color" — background colors, text colors, border colors, theme palette shifts
+- "layout" — element positioning, flexbox/grid changes, alignment shifts
+- "typography" — font family, size, weight, line-height, letter-spacing
+- "spacing" — margins, paddings, gaps between elements
+- "visibility" — elements appearing/disappearing, opacity changes, display toggling
+- "content" — text content changes, different labels, new/removed copy
+- "image" — different images, broken images, image size changes
+- "animation" — transition changes, animation timing, hover effects
 
 ## Rules
 
@@ -65,7 +77,9 @@ Respond with ONLY a valid JSON object (no markdown, no code fence). The JSON mus
 - Focus on what a real human tester would notice at normal viewing distance
 - Do NOT flag differences that are clearly OS/browser rendering engine variations
 - Be precise in "areas" — use UI region names like "navbar", "hero section", "footer", "sidebar", "card grid"
-- "description" should be actionable — a developer should understand what changed`;
+- "description" should be actionable — a developer should understand what changed
+- "changedProperties" must contain at least one entry when severity is not "none"
+- Use "changedProperties" to classify the TYPE of change, and "areas" to classify WHERE it changed`;
 
 export interface VlmPromptContext {
   pageName: string;

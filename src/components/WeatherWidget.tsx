@@ -15,12 +15,12 @@ export default function WeatherWidget({ destinationId }: WeatherWidgetProps) {
 
   return (
     <div className="bg-white rounded-xl shadow-md p-6">
-      <h3 className="font-bold text-orange-800 text-lg mb-4">🌤 {t('weather.title')}</h3>
+      <h3 className="font-bold text-blue-600 text-lg mb-4">🌤 {t('weather.title')}</h3>
 
       {/* Current weather */}
       <div className="flex items-center justify-between mb-4">
         <div>
-          <div className="text-3xl font-bold text-orange-800">{current.temp}°C</div>
+          <div className="text-3xl font-bold text-blue-600">{current.temp}°C</div>
           <div className="text-sm text-slate-500 mt-1">
             {conditionEmoji[current.condition]} {t(`weather.${current.condition}`)}
           </div>

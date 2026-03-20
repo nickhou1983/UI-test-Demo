@@ -1,8 +1,7 @@
 /**
  * VLM Visual Regression Reviewer
  *
- * Canonical source for the playwright-vlm skill.
- * Copy to: tests/utils/vlm-reviewer.ts
+ * Canonical source: .github/skills/playwright-vlm/templates/utils/vlm-reviewer.ts
  *
  * Sends baseline + actual screenshots to Azure OpenAI GPT-4o vision
  * for semantic-level visual diff analysis. Used as a "smart noise filter"
@@ -14,10 +13,13 @@ import { AzureOpenAI } from 'openai';
 import { DefaultAzureCredential, getBearerTokenProvider } from '@azure/identity';
 import { VLM_SYSTEM_PROMPT, buildUserPrompt, type VlmPromptContext } from './vlm-prompts';
 
+export type VlmChangedProperty = 'color' | 'layout' | 'typography' | 'spacing' | 'visibility' | 'content' | 'image' | 'animation';
+
 export interface VlmReviewResult {
   severity: 'none' | 'cosmetic' | 'minor' | 'breaking';
   description: string;
   areas: string[];
+  changedProperties: VlmChangedProperty[];
   recommendation: 'pass' | 'warn' | 'fail';
   confidence: number;
 }
@@ -96,10 +98,16 @@ function parseVlmResponse(content: string): VlmReviewResult {
     throw new Error(`Invalid confidence: ${parsed.confidence}`);
   }
 
+  const validProperties: VlmChangedProperty[] = ['color', 'layout', 'typography', 'spacing', 'visibility', 'content', 'image', 'animation'];
+  const changedProperties: VlmChangedProperty[] = Array.isArray(parsed.changedProperties)
+    ? parsed.changedProperties.filter((p: string) => validProperties.includes(p as VlmChangedProperty))
+    : [];
+
   return {
     severity: parsed.severity,
     description: String(parsed.description || ''),
     areas: Array.isArray(parsed.areas) ? parsed.areas.map(String) : [],
+    changedProperties,
     recommendation: parsed.recommendation,
     confidence: parsed.confidence,
   };

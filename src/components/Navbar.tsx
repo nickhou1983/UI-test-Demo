@@ -25,7 +25,7 @@ export default function Navbar() {
   };
 
   return (
-    <nav className="bg-orange-800 text-white sticky top-0 z-50 shadow-md">
+    <nav className="bg-slate-900 text-white sticky top-0 z-50 shadow-md">
       <div className="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
         <Link to="/" className="text-xl font-bold tracking-wide">
           TravelVista
@@ -37,8 +37,8 @@ export default function Navbar() {
             <Link
               key={link.to}
               to={link.to}
-              className={`hover:text-emerald-300 transition ${
-                isActive(link.to) ? 'text-emerald-300 font-semibold' : ''
+              className={`hover:text-cyan-400 transition ${
+                isActive(link.to) ? 'text-cyan-400 font-semibold' : ''
               }`}
             >
               {link.label}
@@ -46,7 +46,7 @@ export default function Navbar() {
           ))}
           <button
             onClick={toggleLanguage}
-            className="bg-emerald-600 hover:bg-emerald-700 px-3 py-1 rounded text-sm transition"
+            className="bg-cyan-600 hover:bg-cyan-700 px-3 py-1 rounded text-sm transition"
           >
             {t('nav.lang')}
           </button>
@@ -80,8 +80,8 @@ export default function Navbar() {
               key={link.to}
               to={link.to}
               onClick={() => setMenuOpen(false)}
-              className={`block py-2 hover:text-emerald-300 transition ${
-                isActive(link.to) ? 'text-emerald-300 font-semibold' : ''
+              className={`block py-2 hover:text-cyan-400 transition ${
+                isActive(link.to) ? 'text-cyan-400 font-semibold' : ''
               }`}
             >
               {link.label}
@@ -89,7 +89,7 @@ export default function Navbar() {
           ))}
           <button
             onClick={() => { toggleLanguage(); setMenuOpen(false); }}
-            className="bg-emerald-600 hover:bg-emerald-700 px-3 py-1 rounded text-sm transition"
+            className="bg-cyan-600 hover:bg-cyan-700 px-3 py-1 rounded text-sm transition"
           >
             {t('nav.lang')}
           </button>
