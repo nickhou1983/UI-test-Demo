@@ -88,7 +88,9 @@ Adapt similarly for Svelte and Solid.
 
 **Important:** If the project uses Tailwind CSS or PostCSS, ensure `ctViteConfig` includes the CSS config so styles render correctly in component tests.
 
-## Test Fixtures
+## Test Fixtures (Owned by this skill)
+
+This skill is the **sole owner** of CT test fixture generation.
 
 Generate `tests/fixtures/test-utils.ts` with provider wrappers:
 
@@ -96,6 +98,11 @@ Generate `tests/fixtures/test-utils.ts` with provider wrappers:
 - If using i18n → `I18nextProvider` / `createI18n` wrapper
 - If using state management → Context/Store provider wrapper
 - Export a combined `TestWrapper` component that includes all needed providers
+
+**Ownership rule:** If `tests/fixtures/test-utils.ts` is missing, this skill
+generates it. Other agents (e.g., `ui-test-component`) should check for its
+existence and invoke this skill if absent — they must not generate fixtures
+themselves.
 
 ## Test Generation
 

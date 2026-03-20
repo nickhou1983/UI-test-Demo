@@ -1,5 +1,6 @@
 ---
 name: ui-test-component
+user-invocable: false
 description: >-
   Component testing agent for Playwright CT. Use when: user asks for component tests,
   component testing, isolated UI testing, unit-style UI tests, props testing,
@@ -7,6 +8,7 @@ description: >-
   component mounting, or Playwright component testing / CT. Reuses shared discovery
   output and invokes Playwright CT workflows without handling E2E or visual
   governance concerns.
+
 ---
 
 # UI Test Component Agent
@@ -29,24 +31,56 @@ Before generating tests, ensure you have enough discovery context for:
 3. required providers such as router, i18n, or context
 4. style dependencies such as Tailwind / PostCSS / CSS modules
 
-If these are missing, invoke `ui-test-discovery` first.
+If these are missing, see the Discovery Gate below.
 
 ## Primary Skill
 
 Use [playwright-ct](../skills/playwright-ct/SKILL.md) as the implementation guide.
 
+## Discovery Gate
+
+Before generating tests, check whether usable discovery output already exists
+(Component Inventory, provider dependencies, style system info).
+
+| Situation | Action |
+|-----------|--------|
+| Discovery output exists and covers target components | Reuse it directly |
+| Discovery output exists but is incomplete for the target | Invoke `ui-test-discovery` with a focused deep-dive request |
+| No discovery output at all | Inform the user that discovery is needed and invoke `ui-test-discovery` |
+
+Never silently re-discover what `ui-test-discovery` already produced.
+
+## Configuration Gate
+
+This agent validates that the required config exists but never generates it.
+
+1. Check whether `playwright-ct.config.ts` exists.
+2. If missing → invoke the `playwright-config` skill to generate it.
+3. If present → validate it has the correct `testDir` and framework import.
+
+`playwright-config` is the **sole owner** of config file generation.
+
+## Fixture Gate
+
+Test fixtures (`tests/fixtures/test-utils.ts`) are owned by the `playwright-ct` skill.
+
+1. Check whether the fixture file exists with needed provider wrappers.
+2. If missing → generate it via `playwright-ct` skill templates.
+3. If present → verify it includes required providers (Router, i18n, Context).
+
 ## Workflow
 
-1. Confirm CT prerequisites.
-2. Reuse or generate `playwright-ct.config.ts` only if needed.
-3. Generate tests for:
+1. Run Discovery Gate.
+2. Run Configuration Gate.
+3. Run Fixture Gate.
+4. Generate tests for:
    - rendering
    - props-driven output
    - event callbacks
    - conditional branches
    - provider-dependent rendering
-4. Run CT.
-5. Report failures without auto-fixing.
+5. Run CT.
+6. Report failures without auto-fixing.
 
 ## Boundaries
 

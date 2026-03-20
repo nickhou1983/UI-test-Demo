@@ -15,6 +15,14 @@ When configuration issues are detected (missing files, incorrect settings, versi
 
 ## Purpose
 
+This skill is the **sole owner** of Playwright configuration file generation.
+
+No other agent or skill should generate `playwright.config.ts`,
+`playwright-ct.config.ts`, or `playwright.service.config.ts` directly.
+Testing agents (`ui-test-component`, `ui-test-e2e`, `ui-test-visual`) must
+validate that the required config exists and invoke this skill when it is
+missing or misconfigured.
+
 This skill is intentionally template-driven.
 
 It should work from a small configuration brief instead of depending on deep

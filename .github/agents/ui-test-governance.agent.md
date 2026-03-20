@@ -1,5 +1,6 @@
 ---
 name: ui-test-governance
+user-invocable: false
 description: >-
   Advanced UI test governance agent. Use when: user asks for cloud Playwright
   execution, Azure Playwright Workspace setup, Azure cloud browsers, PR visual
@@ -54,6 +55,22 @@ Use these as the source of truth:
 3. baseline update review flow
 4. source-of-truth policy
 
+### Baseline Authority
+
+Define which environment owns the authoritative baselines:
+
+| Strategy | Owner | Update Flow |
+|----------|-------|-------------|
+| **Local-only** | Developer machine | Developer reviews screenshots → commits to git |
+| **Azure-only** | Azure CI pipeline | CI generates on main → PRs compare against main's baseline |
+| **Hybrid** | Both (scoped) | Local for rapid dev; Azure for PR merge gates |
+
+When advising on baseline authority:
+1. Ask the user which strategy they prefer if not stated.
+2. For Azure-only: baselines update only on main branch CI; PRs always compare.
+3. For Hybrid: document clearly which suite uses which authority.
+4. Never allow mixed authorities within the same test suite.
+
 ### VLM Review
 
 Refer to [playwright-vlm](../skills/playwright-vlm/SKILL.md) for implementation details. This agent owns the **policy layer**:
@@ -62,6 +79,20 @@ Refer to [playwright-vlm](../skills/playwright-vlm/SKILL.md) for implementation 
 2. confidence threshold guidance — recommend safe defaults
 3. cost controls — enforce `VLM_MAX_CALLS` budget per pipeline
 4. relationship to native Playwright gating — pixel-first, VLM-fallback only
+
+### VLM Cost Controls & Degradation
+
+| Budget Control | Default | Description |
+|----------------|---------|-------------|
+| `VLM_MAX_CALLS` | 10 | Maximum VLM API calls per pipeline run |
+| `VLM_CONFIDENCE_THRESHOLD` | 0.7 | Minimum confidence to trust VLM classification |
+| `VLM_REVIEW` | `false` | Master switch — must be explicitly enabled |
+
+**Degradation behavior when budget is exceeded:**
+1. First N failures (up to `VLM_MAX_CALLS`) → receive VLM semantic review.
+2. Remaining failures → fall back to pixel-only gating (hard pass/fail).
+3. CI report clearly marks which failures had VLM review and which did not.
+4. Recommend: set `VLM_REVIEW=true` only on main branch or release branches to control cost.
 
 ## Boundaries
 

@@ -30,16 +30,53 @@ Before generating tests, ensure you have enough discovery context for:
 4. basic locator strategy
 5. optional user journey outline when multi-step flows are requested
 
-If these are missing, invoke `ui-test-discovery` first.
+If these are missing, see the Discovery Gate below.
 
 ## Primary Skill
 
 Use [playwright-e2e](../skills/playwright-e2e/SKILL.md) as the implementation guide.
 
+## Discovery Gate
+
+Before generating tests, check whether usable discovery output already exists
+(Route Inventory, Locator Strategy, Journey Map, Side-Effect Inventory).
+
+| Situation | Action |
+|-----------|--------|
+| Discovery output exists and covers target routes/journeys | Reuse it directly |
+| Discovery output exists but is incomplete for the target | Invoke `ui-test-discovery` with a focused deep-dive request |
+| No discovery output at all | Inform the user that discovery is needed and invoke `ui-test-discovery` |
+
+Never silently re-discover what `ui-test-discovery` already produced.
+
+## Configuration Gate
+
+This agent validates that the required config exists but never generates it.
+
+1. Check whether `playwright.config.ts` exists with an `e2e` project.
+2. If missing or misconfigured → invoke the `playwright-config` skill to generate/fix it.
+3. If present and valid → proceed.
+
+`playwright-config` is the **sole owner** of config file generation.
+
+## Side-Effect Handling
+
+When the Discovery output includes a Side-Effect Inventory, apply these patterns
+in generated tests:
+
+| Side-Effect | Handler Pattern |
+|-------------|----------------|
+| `window.confirm` / `window.alert` / `window.prompt` | `page.on('dialog', d => d.accept())` before triggering action |
+| `target="_blank"` / `window.open` | `const [popup] = await Promise.all([page.waitForEvent('popup'), triggerAction])` |
+| `mailto:` / `tel:` / external links | Assert `href` attribute instead of clicking; or intercept with `page.route()` |
+| `download` attribute | `const [download] = await Promise.all([page.waitForEvent('download'), triggerAction])` |
+
+Include these handlers in the affected test files, not globally.
+
 ## Workflow
 
-1. Confirm E2E prerequisites.
-2. Reuse or generate Playwright config only if needed.
+1. Run Discovery Gate.
+2. Run Configuration Gate.
 3. Generate tests for:
    - page load
    - navigation
@@ -47,6 +84,7 @@ Use [playwright-e2e](../skills/playwright-e2e/SKILL.md) as the implementation gu
    - state changes
    - user journeys
    - i18n switching when applicable
+   - side-effect scenarios (from Side-Effect Inventory)
 4. Run E2E tests.
 5. Report failures without auto-fixing.
 

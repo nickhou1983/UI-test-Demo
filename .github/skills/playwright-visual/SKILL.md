@@ -159,6 +159,62 @@ test('{PageName} in {language}', async ({ page }) => {
 | Run visual tests (local) | `npx playwright test --project=visual` |
 | Update baselines (local) | `npx playwright test --project=visual --update-snapshots` |
 
+## Screenshot Stabilization Helpers (Owned by this skill)
+
+This skill is the **sole owner** of visual test stabilization utilities.
+
+Generate `tests/fixtures/visual-helpers.ts` when visual tests are created:
+
+```typescript
+import { Page } from '@playwright/test';
+
+/**
+ * Disable CSS animations and transitions for deterministic screenshots.
+ */
+export async function disableAnimations(page: Page): Promise<void> {
+  await page.addStyleTag({
+    content: `
+      *, *::before, *::after {
+        animation-duration: 0s !important;
+        animation-delay: 0s !important;
+        transition-duration: 0s !important;
+        transition-delay: 0s !important;
+      }
+    `,
+  });
+}
+
+/**
+ * Wait for all images to finish loading.
+ */
+export async function waitForImages(page: Page): Promise<void> {
+  await page.waitForFunction(() =>
+    Array.from(document.images).every((img) => img.complete)
+  );
+}
+
+/**
+ * Dismiss any browser dialogs that appear during screenshot capture.
+ */
+export function dismissDialogs(page: Page): void {
+  page.on('dialog', (d) => d.dismiss());
+}
+
+/**
+ * Full stabilization sequence: call before every screenshot assertion.
+ */
+export async function stabilize(page: Page): Promise<void> {
+  dismissDialogs(page);
+  await disableAnimations(page);
+  await page.waitForLoadState('networkidle');
+  await waitForImages(page);
+}
+```
+
+**Ownership rule:** If `tests/fixtures/visual-helpers.ts` is missing, this skill
+generates it. Other agents should check for its existence and invoke this skill
+if absent.
+
 ## Governance Boundary
 
 This skill should hand off the following concerns instead of owning them inline:

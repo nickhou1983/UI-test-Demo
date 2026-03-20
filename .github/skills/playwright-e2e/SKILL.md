@@ -238,9 +238,74 @@ Journey tests are generated from the **Journey Map**. They live in `tests/e2e/us
 - Use **resolved type information** from discovery to pick meaningful test values (e.g., use actual category enum values, not arbitrary strings)
 - Test **edge cases** identified through type resolution: optional props absent, empty arrays, boundary values for numeric fields
 
-## Handoff Boundary
+## Side-Effect Test Patterns (Owned by this skill)
 
-This skill owns E2E test generation and execution patterns.
+When the discovery Side-Effect Inventory identifies browser-level side-effects,
+use these standard handler patterns in generated E2E tests.
+
+### Dialog Handling (`window.confirm` / `window.alert` / `window.prompt`)
+
+```typescript
+test('handles confirm dialog on delete action', async ({ page }) => {
+  await page.goto('{route}');
+  // Register handler BEFORE triggering the action
+  page.on('dialog', async (dialog) => {
+    expect(dialog.type()).toBe('confirm');
+    await dialog.accept();
+  });
+  await page.getByRole('button', { name: '{delete_button}' }).click();
+  // Assert post-dialog state
+  await expect(page.locator('{result_element}')).toBeVisible();
+});
+```
+
+### New Tab / Popup Handling (`target="_blank"` / `window.open`)
+
+```typescript
+test('external link opens in new tab', async ({ page, context }) => {
+  await page.goto('{route}');
+  const [popup] = await Promise.all([
+    context.waitForEvent('page'),
+    page.getByRole('link', { name: '{link_text}' }).click(),
+  ]);
+  await popup.waitForLoadState();
+  expect(popup.url()).toContain('{expected_url_fragment}');
+  await popup.close();
+});
+```
+
+### External Navigation (`mailto:` / `tel:` / external URLs)
+
+```typescript
+test('mailto link has correct href', async ({ page }) => {
+  await page.goto('{route}');
+  const mailLink = page.getByRole('link', { name: '{contact_text}' });
+  await expect(mailLink).toHaveAttribute('href', /^mailto:/);
+});
+
+test('external link has correct href and target', async ({ page }) => {
+  await page.goto('{route}');
+  const extLink = page.getByRole('link', { name: '{link_text}' });
+  await expect(extLink).toHaveAttribute('href', '{expected_url}');
+  await expect(extLink).toHaveAttribute('target', '_blank');
+});
+```
+
+### Download Handling
+
+```typescript
+test('export button triggers file download', async ({ page }) => {
+  await page.goto('{route}');
+  const [download] = await Promise.all([
+    page.waitForEvent('download'),
+    page.getByRole('button', { name: '{export_button}' }).click(),
+  ]);
+  expect(download.suggestedFilename()).toMatch(/{filename_pattern}/);
+});
+```
+
+**Rule:** Include these handlers only in tests that exercise the specific
+side-effect. Do not register global handlers that mask unexpected dialogs.
 
 It does not own:
 

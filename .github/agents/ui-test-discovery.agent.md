@@ -64,6 +64,27 @@ Produce only the outputs that downstream agents need:
    
    For each entry, also provide a recommended test handling pattern (e.g., `page.on('dialog', d => d.accept())` for confirm dialogs).
 
+## Output Freshness Convention
+
+Discovery output should include a metadata header so downstream agents can
+judge whether re-discovery is needed:
+
+```markdown
+<!-- discovery-meta
+  generated: {ISO-8601 timestamp}
+  scope: minimum | standard | deep
+  routes-found: {count}
+  components-found: {count}
+  i18n-detected: true | false
+  side-effects-found: {count}
+-->
+```
+
+Downstream agents should:
+1. Check for this header before invoking a new discovery run.
+2. If the header exists and scope covers their needs → reuse.
+3. If the header is missing or scope is insufficient → request a targeted deep-dive, not a full re-run.
+
 ## Handoff Rules
 
 ### For `ui-test-component`
