@@ -110,7 +110,29 @@ Escalate to `ui-test-governance` only when the user explicitly asks for:
 3. Apply Screenshot Stabilization setup.
 4. Generate visual specs for selected pages or routes.
 5. Run baselines or comparisons.
-6. Report diffs without auto-updating baselines unless explicitly requested.
+6. **Report diffs only — NEVER run `--update-snapshots` unless the user's message explicitly contains a baseline update request** (see Baseline Update Policy below).
+
+## ⛔ Baseline Update Policy
+
+This is a **hard rule** that overrides any helpfulness heuristic.
+
+| Condition | Action |
+|-----------|--------|
+| Tests fail due to pixel diffs | **Report** diffs with file paths and diff percentages. Ask the user whether to update baselines. **STOP and wait for user response.** |
+| User says "更新基线" / "update baselines" / "update snapshots" | Run `--update-snapshots` for the affected tests only. |
+| User says "运行视觉测试" / "进行视觉测试" / "run visual tests" | Run comparison **only**. Do NOT update baselines even if all tests fail. |
+
+### Prohibited Actions
+
+- **NEVER** run `--update-snapshots` as a "recovery" step after test failures.
+- **NEVER** chain a comparison run followed by an automatic update run in a single response.
+- **NEVER** assume the user wants baselines updated just because tests failed.
+
+### Rationale
+
+Baseline updates are a **deliberate tester decision**, not an automation convenience.
+Outdated baselines often indicate real UI changes that need human review.
+Auto-updating masks regressions and defeats the purpose of visual testing.
 
 ## Boundaries
 
