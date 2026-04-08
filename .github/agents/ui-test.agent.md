@@ -110,6 +110,23 @@ When the user asks for:
 3. Treat Azure, CI governance, and VLM as optional advanced paths, not the default path.
 4. Preserve the existing report-only testing model unless the user explicitly asks to modify files.
 
+## Report Policy
+
+Every testing agent **must** update `docs/TEST_REPORT.md` after running tests.
+Each agent owns its own section and must not overwrite others.
+
+| Agent | Owns Section(s) |
+|-------|------------------|
+| `ui-test-component` | 组件测试, 结果总览 CT row |
+| `ui-test-e2e` | 端到端测试, 结果总览 E2E row |
+| `ui-test-visual` | 视觉回归测试, 视觉基线产物, 结果总览 Visual row |
+
+All agents also update the **生成时间** timestamp when they write their section.
+
+When multiple agents run in sequence, the last writer's timestamp is authoritative.
+
+When routing to a specialized agent, remind it to run its Report Gate after test execution.
+
 ## Do Not Do
 
 1. Do not duplicate the full discovery workflow here.

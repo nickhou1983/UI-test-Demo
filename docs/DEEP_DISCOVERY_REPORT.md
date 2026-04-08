@@ -1,4 +1,922 @@
 <!-- discovery-meta
+  generated: 2026-04-07T00:00:00+08:00
+  scope: deep
+  routes-found: 8
+  components-found: 10
+  i18n-detected: true
+  side-effects-found: 4
+-->
+
+# TravelVista 深度发现报告
+
+> 生成时间：2026-04-07 | 分析范围：deep | 实时网站 + 源码分析
+
+---
+
+## 目录
+
+1. [项目架构概览](#1-项目架构概览)
+2. [完整路由地图](#2-完整路由地图)
+3. [组件清单](#3-组件清单)
+4. [页面结构与交互分析](#4-页面结构与交互分析)
+5. [定位器策略分析](#5-定位器策略分析)
+6. [i18n 覆盖分析](#6-i18n-覆盖分析)
+7. [交互元素目录](#7-交互元素目录)
+8. [数据流与状态管理](#8-数据流与状态管理)
+9. [副作用清单](#9-副作用清单)
+10. [响应式行为分析](#10-响应式行为分析)
+11. [推荐测试场景](#11-推荐测试场景)
+12. [发现的问题与建议](#12-发现的问题与建议)
+
+---
+
+## 1. 项目架构概览
+
+### 1.1 技术栈
+
+| 层级 | 技术 | 版本 |
+|------|------|------|
+| 框架 | React | 19.x |
+| 语言 | TypeScript | 5.9.x |
+| 构建工具 | Vite | 8.x |
+| 路由 | react-router-dom | 7.x |
+| 国际化 | i18next + react-i18next | 25.x / 16.x |
+| 样式 | Tailwind CSS | 4.x (PostCSS) |
+| 测试 | Playwright (E2E + CT + Visual) | 1.58.x |
+| 图标 | react-icons | 5.x |
+
+### 1.2 项目结构
+
+```
+src/
+├── App.tsx                  # 路由定义（Routes 配置）
+├── main.tsx                 # 入口，BrowserRouter basename="/UI-test-Demo"
+├── index.css                # 全局样式
+├── components/              # 10 个通用组件
+│   ├── Layout.tsx           # 布局容器（Navbar + Outlet + Footer + ScrollToTop）
+│   ├── Navbar.tsx           # 导航栏（含语言切换、移动端菜单）
+│   ├── Footer.tsx           # 页脚
+│   ├── Carousel.tsx         # 轮播组件
+│   ├── DestinationCard.tsx  # 目的地卡片
+│   ├── FavoriteButton.tsx   # 收藏按钮
+│   ├── FilterBar.tsx        # 筛选栏
+│   ├── SearchBar.tsx        # 搜索框
+│   ├── WeatherWidget.tsx    # 天气组件
+│   └── ScrollToTop.tsx      # 返回顶部按钮
+├── pages/                   # 8 个页面
+│   ├── HomePage.tsx
+│   ├── DestinationsPage.tsx
+│   ├── DestinationDetailPage.tsx
+│   ├── FavoritesPage.tsx
+│   ├── AboutPage.tsx
+│   ├── TripPlannerPage.tsx
+│   ├── TripEditPage.tsx
+│   └── NotFoundPage.tsx
+├── data/                    # 静态数据源
+│   ├── destinations.ts      # 12 个目的地 + 详情 + 分类
+│   ├── reviews.ts           # 3 条首页评价
+│   ├── team.ts              # 4 名团队成员
+│   └── weather.ts           # 模拟天气数据
+├── i18n/                    # 国际化
+│   ├── index.ts             # i18next 初始化（默认语言：zh）
+│   ├── zh.json              # 中文（~460+ 个键）
+│   └── en.json              # 英文（~460+ 个键）
+├── types/
+│   └── index.ts             # TypeScript 类型定义
+└── utils/
+    ├── assetUrl.ts           # 基于 BASE_URL 的资源路径
+    ├── favorites.ts          # localStorage 收藏管理
+    └── tripPlanner.ts        # localStorage 行程管理
+```
+
+### 1.3 关键架构特征
+
+- **纯前端应用**：无 API 调用，所有数据为静态内联或 localStorage 持久化
+- **状态管理**：无全局状态管理库（无 Redux/Zustand），组件间通过 `window` 自定义事件同步
+- **路由基路径**：`basename="/UI-test-Demo"`，所有路由需加此前缀
+- **资源路径**：通过 `assetUrl()` 函数基于 `import.meta.env.BASE_URL` 动态计算
+
+---
+
+## 2. 完整路由地图
+
+| 路由 | 页面组件 | 参数 | 查询参数 | 描述 |
+|------|----------|------|----------|------|
+| `/` | `HomePage` | - | - | 首页：Hero + 搜索 + 热门目的地 + 主题 + 评价 |
+| `/destinations` | `DestinationsPage` | - | `region`, `type` | 目的地列表：筛选 + 排序 + 搜索 |
+| `/destinations/:id` | `DestinationDetailPage` | `id` (目的地 ID) | - | 目的地详情：图片 + 景点 + 评价 + 天气 + 实用信息 |
+| `/favorites` | `FavoritesPage` | - | - | 心愿单：已收藏的目的地列表 |
+| `/about` | `AboutPage` | - | - | 关于页：使命 + 价值观 + 团队 + 联系 |
+| `/trips` | `TripPlannerPage` | - | `dest` | 行程规划列表：创建/删除行程 |
+| `/trips/:tripId` | `TripEditPage` | `tripId` | - | 行程编辑：天数标签 + 活动管理 |
+| `*` | `NotFoundPage` | - | - | 404 页面 |
+
+### 2.1 路由参数详情
+
+- **目的地 ID 值**：`bali`, `kyoto`, `santorini`, `paris`, `maldives`, `swiss`, `newyork`, `chengdu`, `machupicchu`, `capetown`, `greatbarrierreef`, `nepal`（共 12 个）
+- **地区筛选值**：`asia`, `europe`, `north-america`, `south-america`, `africa`, `oceania`
+- **类型筛选值**：`beach`, `mountain`, `city`, `culture`
+- **行程 ID**：由 `Date.now().toString(36)` 动态生成
+
+### 2.2 导航结构
+
+```
+Navbar
+├── TravelVista（Logo → /）
+├── 首页（/）
+├── 目的地（/destinations）
+├── 心愿单（/favorites）
+├── 行程规划（/trips）
+├── 关于我们（/about）
+└── 语言切换按钮（EN / 中文）
+
+Footer
+├── 品牌信息
+├── 快速链接（首页、目的地、关于我们）
+└── 社交链接（微博、微信、Instagram）
+```
+
+---
+
+## 3. 组件清单
+
+### 3.1 Layout（布局组件）
+
+| 属性 | 说明 |
+|------|------|
+| 子组件 | Navbar + Outlet + Footer + ScrollToTop |
+| 样式 | `min-h-screen flex flex-col` |
+| 特征 | 所有页面共享此布局 |
+
+### 3.2 Navbar（导航栏）
+
+| 属性 | 说明 |
+|------|------|
+| Props | 无 |
+| 状态 | `menuOpen`（移动端菜单开关） |
+| 交互 | 5 个导航链接 + 语言切换按钮 + 移动端汉堡菜单 |
+| 高亮逻辑 | 基于 `useLocation().pathname` 判断活跃路由 |
+| 响应式 | `md:` 断点切换桌面/移动导航 |
+| 定位 | `sticky top-0 z-50` |
+
+### 3.3 Footer（页脚）
+
+| 属性 | 说明 |
+|------|------|
+| Props | 无 |
+| 内容 | 品牌描述 + 快速链接（3个） + 社交链接（3个） + 版权信息 |
+| 布局 | 3 列网格（`md:grid-cols-3`） |
+
+### 3.4 Carousel（轮播组件）
+
+| 属性 | 说明 |
+|------|------|
+| Props | `items: ReactNode[]`, `autoPlayInterval?: number`（默认 4000ms） |
+| 状态 | `current`（当前幻灯片索引） |
+| 交互 | 自动播放 + 底部圆点指示器点击切换 |
+| 动画 | CSS `translateX` + `transition-transform duration-500` |
+
+### 3.5 DestinationCard（目的地卡片）
+
+| 属性 | 说明 |
+|------|------|
+| Props | `destination: Destination` |
+| 子组件 | FavoriteButton |
+| 交互 | 整个卡片为 `<Link>` 跳转到详情页 |
+| 展示 | 图片 + 类型标签 + 名称 + 国家 + 描述（2行截断） + 星级 + 评分 |
+
+### 3.6 FavoriteButton（收藏按钮）
+
+| 属性 | 说明 |
+|------|------|
+| Props | `destinationId: string`, `className?: string` |
+| 状态 | `favorited`（基于 localStorage） |
+| 交互 | 点击切换收藏状态，阻止事件冒泡 |
+| 事件 | 触发 `window.dispatchEvent(new Event('favorites-changed'))` |
+| aria-label | `"Add to wishlist"` / `"Remove from wishlist"` |
+| 存储 | localStorage key: `travelvista_favorites` |
+
+### 3.7 FilterBar（筛选栏）
+
+| 属性 | 说明 |
+|------|------|
+| Props | `keyword`, `region`, `type`, `sortBy` + 4 个 onChange 回调 |
+| 子组件 | SearchBar |
+| 交互 | 搜索框 + 地区下拉 + 类型下拉 + 排序下拉 |
+| aria-label | 各下拉框通过 `aria-label` 标注 |
+
+### 3.8 SearchBar（搜索框）
+
+| 属性 | 说明 |
+|------|------|
+| Props | `value: string`, `onChange: (v: string) => void`, `placeholder?: string` |
+| 交互 | 实时输入搜索（受控组件） |
+| 样式 | 左侧搜索图标 + 圆角输入框 |
+
+### 3.9 WeatherWidget（天气组件）
+
+| 属性 | 说明 |
+|------|------|
+| Props | `destinationId: string` |
+| 数据源 | `data/weather.ts` 静态数据 |
+| 展示 | 当前温度/湿度/风速 + 5 日预报 |
+| 条件渲染 | 若无天气数据则返回 `null` |
+
+### 3.10 ScrollToTop（返回顶部）
+
+| 属性 | 说明 |
+|------|------|
+| Props | 无 |
+| 状态 | `visible`（滚动超过 300px 显示） |
+| 交互 | 点击平滑滚动到顶部 |
+| aria-label | `"Back to top"` |
+
+---
+
+## 4. 页面结构与交互分析
+
+### 4.1 HomePage（首页）
+
+**区块结构：**
+1. **Hero 区域** — 全屏背景图 + 标题 + 副标题 + SearchBar
+2. **热门目的地** — 4 列卡片网格（前 8 个目的地），支持搜索过滤
+3. **旅行主题** — 4 个分类卡片（海滩/山岳/城市/文化），点击跳转带 `type` 参数的目的地页
+4. **旅行者评价** — Carousel 轮播 3 条评价
+5. **查看全部** — 按钮跳转到 `/destinations`
+
+**交互：**
+- 搜索框实时过滤热门目的地（基于名称和描述匹配）
+- 主题卡片链接到 `/destinations?type={type}`
+- 评价轮播自动播放（4秒间隔）
+
+### 4.2 DestinationsPage（目的地列表页）
+
+**区块结构：**
+1. **页面标题** — 深色背景 banner
+2. **FilterBar** — 搜索 + 地区（6个选项） + 类型（4个选项） + 排序（3个选项）
+3. **结果计数** — "共 N 个目的地"
+4. **卡片网格** — 3 列布局
+5. **空状态** — 无匹配结果提示
+
+**交互：**
+- URL 查询参数 `region` 和 `type` 可预选筛选条件
+- 搜索基于 i18n 翻译文本进行关键词匹配
+- 排序支持评分和名称排序
+
+### 4.3 DestinationDetailPage（目的地详情页）
+
+**区块结构：**
+1. **面包屑导航** — 首页 > 目的地 > 当前目的地名
+2. **图片画廊** — 主图（2/3宽度） + 2 张副图
+3. **主内容区**
+   - 标题 + 收藏按钮
+   - 国家/地区
+   - 详细描述
+   - 必游景点（2列卡片）
+   - 旅行者评价（带星级）
+4. **侧边栏**
+   - 旅行概览（最佳季节/花费/评分）
+   - 天气组件
+   - 实用信息（交通/签证/货币/时区/语言）
+   - "开始规划行程" 按钮 → `/trips?dest={id}`
+   - "返回目的地列表" 按钮
+5. **相关推荐** — 3 个相关目的地卡片
+
+**交互：**
+- 无效目的地 ID 显示 "未找到" + 返回链接
+- 收藏按钮切换
+- "开始规划行程" 链接预选目的地
+
+### 4.4 FavoritesPage（心愿单页）
+
+**区块结构：**
+1. **页面标题** — 深色 banner
+2. **卡片网格** — 3 列，展示已收藏的目的地
+3. **空状态** — "还没有收藏的目的地" + "去探索目的地" 按钮
+
+**交互：**
+- 监听 `favorites-changed` 事件实时更新
+- 取消收藏后卡片立即移除
+
+### 4.5 AboutPage（关于页）
+
+**区块结构：**
+1. **Hero** — 背景图 + 标题
+2. **使命** — 标题 + 描述 + 3 个价值观卡片
+3. **团队** — 4 个团队成员卡片（头像占位 + 姓名 + 职位 + 简介）
+4. **联系** — 联系文案 + `mailto:` 链接
+
+**交互：**
+- `mailto:hello@travelvista.com` 链接
+
+### 4.6 TripPlannerPage（行程规划页）
+
+**区块结构：**
+1. **页面标题** — 深色 banner
+2. **创建行程按钮**
+3. **行程列表** — 2 列卡片（图片 + 名称 + 目的地 + 天数 + 编辑/删除按钮）
+4. **空状态** — 📋 图标 + 提示文字
+5. **创建行程弹窗（Modal）** — 目的地选择 + 行程名称 + 天数 + 取消/创建按钮
+
+**交互：**
+- 创建行程弹窗：选择目的地（下拉）、输入名称、设置天数（1-14）
+- 删除行程：触发 `window.confirm()` 确认对话框
+- URL 参数 `dest` 自动打开弹窗并预选目的地
+- 表单验证：目的地和名称必填
+
+### 4.7 TripEditPage（行程编辑页）
+
+**区块结构：**
+1. **Header** — 返回链接 + 可编辑行程名称输入框 + 目的地信息
+2. **主内容区**
+   - 天数标签页切换
+   - 当前天活动列表（序号 + 名称 + 时间 + 备注 + 删除按钮）
+   - 快速添加景点（目的地景点按钮列表）
+   - 自定义活动表单（名称 + 时间 + 备注）
+3. **侧边栏**
+   - 目的地卡片
+   - 天气组件
+   - 删除行程按钮
+
+**交互：**
+- 行程名称可编辑（即时保存）
+- 天数标签页切换
+- 快速添加景点
+- 自定义活动添加（名称必填）
+- 删除活动（hover 显示删除按钮）
+- 删除行程（`window.confirm()` → 导航回列表）
+- 无效行程 ID 显示 "未找到"
+
+### 4.8 NotFoundPage（404 页面）
+
+**区块结构：**
+1. **大号 404** — 蓝色标题
+2. **提示文案**
+3. **返回首页按钮**
+
+---
+
+## 5. 定位器策略分析
+
+### 5.1 当前状态总览
+
+| 定位策略 | 可用性 | 覆盖度 | 评估 |
+|----------|--------|--------|------|
+| **aria-label** | ✅ 部分可用 | ~40% | FavoriteButton、FilterBar 下拉框、Toggle menu、Back to top、Slide 按钮 |
+| **角色定位 (role)** | ✅ 语义 HTML | ~70% | `<nav>`、`<main>`、`<footer>` (contentinfo)、`<button>`、`<link>`、`<heading>` |
+| **文本定位** | ✅ 可用 | ~90% | 大部分元素有可见文本，但 i18n 切换后文本变化 |
+| **data-testid** | ❌ 完全缺失 | 0% | **整站无任何 data-testid 属性** |
+| **CSS 类名** | ⚠️ 不稳定 | - | Tailwind 原子类不适合定位 |
+
+### 5.2 各组件可用定位器
+
+#### Navbar
+```
+- 品牌链接: getByRole('link', { name: 'TravelVista' })
+- 导航链接: getByRole('link', { name: t('nav.home') })  // ⚠️ 文本随语言变化
+- 语言按钮: getByRole('button', { name: /EN|中文/ })
+- 汉堡菜单: getByRole('button', { name: 'Toggle menu' })
+```
+
+#### DestinationCard
+```
+- 卡片链接: getByRole('link', { name: /巴厘岛/ })  // ⚠️ 包含子元素文本
+- 收藏按钮: getByRole('button', { name: /wishlist/ }) → 多实例需上下文限定
+```
+
+#### FilterBar
+```
+- 搜索框: getByPlaceholder(t('destinations.search'))  // ⚠️ 语言相关
+- 地区下拉: getByRole('combobox', { name: t('destinations.region') })
+- 类型下拉: getByRole('combobox', { name: t('destinations.type') })
+- 排序下拉: getByRole('combobox', { name: t('destinations.sort') })
+```
+
+#### TripPlannerPage
+```
+- 创建按钮: getByRole('button', { name: /创建行程/ })
+- 删除按钮: getByRole('button', { name: /删除行程/ })
+- 弹窗选择: getByRole('combobox', { name: t('trip.selectDest') })
+- 名称输入: getByPlaceholder(t('trip.namePlaceholder'))
+```
+
+### 5.3 定位器优先级建议
+
+```
+1. getByRole()   — 首选，语义最强
+2. getByLabel()  — 表单元素
+3. getByText()   — 静态文本（需注意 i18n 影响）
+4. getByPlaceholder() — 输入框
+5. data-testid   — 目前不可用，强烈建议添加
+```
+
+### 5.4 🔴 需添加 data-testid 的关键元素
+
+| 组件 / 元素 | 建议 data-testid | 原因 |
+|-------------|-----------------|------|
+| Navbar 容器 | `navbar` | 与 footer nav 区分 |
+| 语言切换按钮 | `lang-switch` | 按钮文本随状态变化 |
+| DestinationCard | `destination-card-{id}` | 多实例需唯一标识 |
+| FavoriteButton | `favorite-btn-{id}` | 多实例区分 |
+| FilterBar | `filter-search`, `filter-region`, `filter-type`, `filter-sort` | 稳定定位 |
+| 行程卡片 | `trip-card-{id}` | 动态生成的多实例 |
+| 天数标签 | `day-tab-{n}` | 数值化定位 |
+| 创建行程弹窗 | `create-trip-dialog` | 弹窗定位 |
+| 天气组件 | `weather-widget` | 组件隔离 |
+| Hero 区域 | `hero-section` | 区域定位 |
+| Footer | `footer` | 区域标识 |
+
+---
+
+## 6. i18n 覆盖分析
+
+### 6.1 配置详情
+
+| 项目 | 值 |
+|------|-----|
+| 框架 | i18next + react-i18next |
+| 默认语言 | `zh`（中文） |
+| 回退语言 | `zh` |
+| 支持语言 | `zh`, `en` |
+| 切换方式 | Navbar 按钮 `i18n.changeLanguage()` |
+| 键总数 | ~460+ 个翻译键 |
+| 命名空间 | 单一 `translation` |
+
+### 6.2 i18n 键分布
+
+| 模块 | 键前缀 | 大致数量 | 覆盖范围 |
+|------|--------|----------|----------|
+| 导航 | `nav.*` | 6 | ✅ 完整 |
+| 首页 | `hero.*`, `home.*` | 10 | ✅ 完整 |
+| 目的地列表 | `dest.*`, `destinations.*`, `filter.*` | ~30 | ✅ 完整 |
+| 目的地详情 | `detail.*` | ~150+ | ✅ 完整（12 个目的地的景点/描述/实用信息） |
+| 评价 | `review.*` | ~60+ | ✅ 完整 |
+| 收藏 | `favorites.*` | 4 | ✅ 完整 |
+| 关于 | `about.*`, `team.*` | ~20 | ✅ 完整 |
+| 行程 | `trip.*` | ~20 | ✅ 完整 |
+| 天气 | `weather.*` | ~15 | ✅ 完整 |
+| 页脚 | `footer.*` | 8 | ✅ 完整 |
+| 404 | `notFound.*` | 3 | ✅ 完整 |
+| 分类 | `cat.*` | 4 | ✅ 完整 |
+
+### 6.3 i18n 特殊注意事项
+
+1. **插值参数**：
+   - `destinations.count`: `{{count}}`
+   - `trip.day`: `{{n}}`
+   - `trip.daysCount`: `{{n}}`
+
+2. **aria-label 未国际化**：
+   - `"Add to wishlist"` / `"Remove from wishlist"` — 固定为英文
+   - `"Toggle menu"` — 固定为英文
+   - `"Back to top"` — 固定为英文
+   - `"Slide N"` — 固定为英文
+   - 这些 aria-label 在 i18n 切换时不变，可作为测试中的稳定锚点
+
+3. **搜索基于翻译文本**：搜索功能使用 `t(d.nameKey)` 进行匹配，切换语言后搜索行为不同
+
+---
+
+## 7. 交互元素目录
+
+### 7.1 按类型分类
+
+#### 链接 (`<Link>` / `<a>`)
+
+| 位置 | 目标 | 数量 | 说明 |
+|------|------|------|------|
+| Navbar | 5 个导航链接 | 5 | 桌面和移动端各一套 |
+| Footer | 3 个快速链接 | 3 | - |
+| HomePage | 8 张目的地卡片 + 4 个主题卡片 + "查看全部" 按钮 | 13 | - |
+| DestinationsPage | N 张目的地卡片 | 最多 12 | 筛选后数量变化 |
+| DetailPage | 面包屑（3个） + 相关推荐（3个） + "规划行程" + "返回列表" | 8 | - |
+| FavoritesPage | N 张卡片 + "去探索目的地" | 动态 | - |
+| TripPlannerPage | N 张行程卡 "编辑行程" | 动态 | - |
+| TripEditPage | "返回行程列表" | 1 | - |
+| AboutPage | `mailto:` 链接 | 1 | 外部操作 |
+| NotFoundPage | "返回首页" | 1 | - |
+
+#### 按钮 (`<button>`)
+
+| 位置 | 功能 | aria-label | 说明 |
+|------|------|------------|------|
+| Navbar | 语言切换 | 无（文本 EN/中文） | 切换中英文 |
+| Navbar | 汉堡菜单 | `"Toggle menu"` | 仅移动端可见 |
+| DestinationCard | 收藏 | `"Add/Remove from wishlist"` | 每张卡片内 |
+| DetailPage | 收藏 | `"Add/Remove from wishlist"` | 标题旁 |
+| Carousel | 圆点指示器 | `"Slide N"` | 3 个 |
+| ScrollToTop | 返回顶部 | `"Back to top"` | 滚动 >300px 显示 |
+| TripPlannerPage | 创建行程 | 无（文本） | - |
+| TripPlannerPage | 删除行程 | 无（文本） | 触发 confirm |
+| TripPlannerPage | 弹窗取消/创建 | 无（文本） | - |
+| TripEditPage | 天数标签 | 无（文本） | N 个按钮 |
+| TripEditPage | 快速添加景点 | 无（文本） | 4 个按钮 |
+| TripEditPage | 添加活动 | 无（文本） | - |
+| TripEditPage | 保存/取消活动 | 无（文本） | - |
+| TripEditPage | 删除活动 | `t('trip.delete')` | hover 显示 |
+| TripEditPage | 删除行程 | 无（文本） | 触发 confirm |
+
+#### 表单输入
+
+| 位置 | 元素类型 | placeholder / label | 说明 |
+|------|----------|---------------------|------|
+| HomePage | `<input>` text | `t('hero.search')` | 搜索目的地 |
+| DestinationsPage | `<input>` text | `t('destinations.search')` | 搜索筛选 |
+| DestinationsPage | 3 个 `<select>` | aria-label 标注 | 地区/类型/排序 |
+| TripPlannerPage | `<select>` | aria-label=`t('trip.selectDest')` | 目的地选择 |
+| TripPlannerPage | `<input>` text | placeholder=`t('trip.namePlaceholder')` | 行程名称 |
+| TripPlannerPage | `<input>` number | aria-label=`t('trip.days')` | 天数 (1-14) |
+| TripEditPage | `<input>` text | aria-label=`t('trip.name')` | 可编辑行程名称 |
+| TripEditPage | `<input>` text | placeholder | 活动名称/时间/备注 |
+
+---
+
+## 8. 数据流与状态管理
+
+### 8.1 数据源
+
+| 数据类型 | 来源 | 持久化 | 同步机制 |
+|----------|------|--------|----------|
+| 目的地列表 | `data/destinations.ts` 静态导入 | 否 | 编译时确定 |
+| 天气数据 | `data/weather.ts` 静态导入 | 否 | 编译时确定 |
+| 评价数据 | `data/reviews.ts` 静态导入 | 否 | 编译时确定 |
+| 团队数据 | `data/team.ts` 静态导入 | 否 | 编译时确定 |
+| 收藏数据 | `localStorage` (`travelvista_favorites`) | ✅ | `favorites-changed` 事件 |
+| 行程数据 | `localStorage` (`travelvista_trips`) | ✅ | `trips-changed` 事件 |
+
+### 8.2 跨组件通信模式
+
+```
+FavoriteButton
+  → toggleFavorite() → localStorage 写入
+  → window.dispatchEvent('favorites-changed')
+  → FavoritesPage useEffect 监听 → 重新读取 getFavorites()
+
+TripPlanner
+  → createTrip() / deleteTrip() → localStorage 写入
+  → window.dispatchEvent('trips-changed')（在 saveTrips 中自动派发）
+  → 组件 useEffect 监听 → 重新读取 getTrips()
+```
+
+### 8.3 URL 与状态联动
+
+| URL 参数 | 读取页面 | 行为 |
+|----------|----------|------|
+| `/destinations?region=asia` | DestinationsPage | 预选地区筛选 |
+| `/destinations?type=beach` | DestinationsPage | 预选类型筛选 |
+| `/trips?dest=bali` | TripPlannerPage | 自动打开创建弹窗 + 预选目的地 |
+
+---
+
+## 9. 副作用清单
+
+### 9.1 浏览器对话框 (Dialogs)
+
+| 页面 | 触发动作 | 对话框类型 | 消息 | 源码位置 |
+|------|----------|------------|------|----------|
+| TripPlannerPage | 点击"删除行程"按钮 | `window.confirm()` | `t('trip.deleteConfirm')` | TripPlannerPage.tsx L39 |
+| TripEditPage | 点击"🗑 删除行程"按钮 | `window.confirm()` | `t('trip.deleteConfirm')` | TripEditPage.tsx L72 |
+
+**推荐测试处理：**
+```typescript
+page.on('dialog', async (dialog) => {
+  expect(dialog.type()).toBe('confirm');
+  await dialog.accept(); // 或 dialog.dismiss() 测试取消
+});
+```
+
+### 9.2 外部导航
+
+| 页面 | 元素 | 类型 | 目标 |
+|------|------|------|------|
+| AboutPage | 联系邮箱链接 | `mailto:` | `hello@travelvista.com` |
+
+**推荐测试处理：**
+```typescript
+// 验证 href 属性而非实际导航
+await expect(page.getByText('hello@travelvista.com')).toHaveAttribute(
+  'href', 'mailto:hello@travelvista.com'
+);
+```
+
+### 9.3 新标签页 / window.open
+
+未检测到 `target="_blank"` 或 `window.open()` 调用。
+
+### 9.4 下载
+
+未检测到 `download` 属性或文件下载行为。
+
+---
+
+## 10. 响应式行为分析
+
+### 10.1 断点设计
+
+基于 Tailwind CSS 默认断点：
+
+| 断点 | 宽度 | 影响组件 |
+|------|------|----------|
+| `sm` | ≥640px | 卡片网格 2 列 |
+| `md` | ≥768px | Navbar 桌面/移动切换、Footer 3 列、Hero 高度、卡片网格变化 |
+| `lg` | ≥1024px | 卡片网格 3-4 列、详情页主内容/侧边栏分栏 |
+
+### 10.2 关键响应式变化
+
+| 组件 | 移动端 (< 768px) | 桌面端 (≥ 768px) |
+|------|-------------------|-------------------|
+| Navbar | 汉堡菜单（可展开） | 水平导航链接 |
+| HomePage Hero | `h-[70vh]` | `h-[85vh]` |
+| HomePage 卡片 | 1 列 | 4 列 (`lg:grid-cols-4`) |
+| DestinationsPage 卡片 | 1 列 | 3 列 (`lg:grid-cols-3`) |
+| FilterBar | 垂直排列 | 水平排列 (`sm:flex-row`) |
+| DetailPage 图片 | 单列 | 主图 2/3 + 副图 1/3 |
+| DetailPage 内容 | 单列 | 主内容 2/3 + 侧边栏 1/3 |
+| TripPlanner 卡片 | 1 列 | 2 列 |
+| AboutPage 价值观 | 1 列 | 3 列 |
+| 团队成员 | 1-2 列 | 4 列 |
+
+---
+
+## 11. 推荐测试场景
+
+### 11.1 组件测试 (CT) — playwright-ct.config.ts
+
+#### SearchBar
+
+| 编号 | 场景 | 重要性 |
+|------|------|--------|
+| CT-SB-01 | 渲染默认 placeholder | 🟢 |
+| CT-SB-02 | 自定义 placeholder | 🟢 |
+| CT-SB-03 | 输入触发 onChange 回调 | 🔴 |
+| CT-SB-04 | 清空输入后值为空 | 🟡 |
+
+#### FavoriteButton
+
+| 编号 | 场景 | 重要性 |
+|------|------|--------|
+| CT-FB-01 | 初始未收藏状态渲染（空心♡） | 🔴 |
+| CT-FB-02 | 初始已收藏状态渲染（实心❤） | 🔴 |
+| CT-FB-03 | 点击切换收藏状态 | 🔴 |
+| CT-FB-04 | 点击阻止事件冒泡 | 🔴 |
+| CT-FB-05 | 触发 `favorites-changed` 事件 | 🟡 |
+| CT-FB-06 | aria-label 正确切换 | 🟡 |
+
+#### DestinationCard
+
+| 编号 | 场景 | 重要性 |
+|------|------|--------|
+| CT-DC-01 | 渲染目的地名称、国家、描述 | 🔴 |
+| CT-DC-02 | 渲染类型标签 | 🟡 |
+| CT-DC-03 | 渲染星级和评分 | 🟡 |
+| CT-DC-04 | 链接指向正确详情页 | 🔴 |
+| CT-DC-05 | 包含图片并有 alt 文本 | 🟡 |
+| CT-DC-06 | 包含 FavoriteButton | 🟢 |
+
+#### Carousel
+
+| 编号 | 场景 | 重要性 |
+|------|------|--------|
+| CT-CR-01 | 渲染所有幻灯片 | 🔴 |
+| CT-CR-02 | 圆点指示器数量正确 | 🟡 |
+| CT-CR-03 | 点击圆点切换幻灯片 | 🔴 |
+| CT-CR-04 | 自动播放切换 | 🟡 |
+| CT-CR-05 | 循环播放到第一张 | 🟢 |
+
+#### FilterBar
+
+| 编号 | 场景 | 重要性 |
+|------|------|--------|
+| CT-FB-01 | 渲染搜索框和 3 个下拉框 | 🔴 |
+| CT-FB-02 | 搜索输入触发 onKeywordChange | 🔴 |
+| CT-FB-03 | 地区选择触发 onRegionChange | 🔴 |
+| CT-FB-04 | 各下拉框选项正确 | 🟡 |
+| CT-FB-05 | 初始值从 props 正确设置 | 🟡 |
+
+#### WeatherWidget
+
+| 编号 | 场景 | 重要性 |
+|------|------|--------|
+| CT-WW-01 | 渲染当前温度 | 🔴 |
+| CT-WW-02 | 渲染 5 日预报 | 🔴 |
+| CT-WW-03 | 无数据时不渲染 | 🟡 |
+| CT-WW-04 | 天气图标正确显示 | 🟢 |
+
+#### ScrollToTop
+
+| 编号 | 场景 | 重要性 |
+|------|------|--------|
+| CT-ST-01 | 初始不可见 | 🟡 |
+| CT-ST-02 | 滚动超 300px 后显示 | 🟡 |
+| CT-ST-03 | 点击滚动到顶部 | 🟡 |
+
+### 11.2 E2E 测试 — playwright.config.ts (project: e2e)
+
+#### 导航
+
+| 编号 | 场景 | 重要性 |
+|------|------|--------|
+| E2E-NAV-01 | 所有导航链接可点击并跳转对应页面 | 🔴 |
+| E2E-NAV-02 | 活跃链接高亮 | 🟡 |
+| E2E-NAV-03 | 移动端汉堡菜单展开/收回 | 🔴 |
+| E2E-NAV-04 | Logo 跳转首页 | 🟢 |
+| E2E-NAV-05 | Footer 链接可用 | 🟢 |
+| E2E-NAV-06 | 面包屑导航功能 | 🟡 |
+
+#### i18n
+
+| 编号 | 场景 | 重要性 |
+|------|------|--------|
+| E2E-I18N-01 | 默认显示中文 | 🔴 |
+| E2E-I18N-02 | 点击 EN 按钮切换到英文 | 🔴 |
+| E2E-I18N-03 | 切换后所有可见文本变为英文 | 🔴 |
+| E2E-I18N-04 | 再次切换恢复中文 | 🟡 |
+| E2E-I18N-05 | 搜索功能在英文下正常工作 | 🟡 |
+
+#### 搜索与筛选
+
+| 编号 | 场景 | 重要性 |
+|------|------|--------|
+| E2E-SF-01 | 首页搜索过滤热门目的地 | 🔴 |
+| E2E-SF-02 | 目的地页搜索关键词过滤 | 🔴 |
+| E2E-SF-03 | 地区筛选过滤 | 🔴 |
+| E2E-SF-04 | 类型筛选过滤 | 🔴 |
+| E2E-SF-05 | 评分排序 | 🟡 |
+| E2E-SF-06 | 名称排序 | 🟡 |
+| E2E-SF-07 | 组合筛选（地区+类型） | 🔴 |
+| E2E-SF-08 | 无结果状态显示 | 🟡 |
+| E2E-SF-09 | URL 参数预选筛选条件 | 🟡 |
+
+#### 收藏功能
+
+| 编号 | 场景 | 重要性 |
+|------|------|--------|
+| E2E-FAV-01 | 点击收藏按钮添加到心愿单 | 🔴 |
+| E2E-FAV-02 | 再次点击取消收藏 | 🔴 |
+| E2E-FAV-03 | 心愿单页面显示已收藏目的地 | 🔴 |
+| E2E-FAV-04 | 在心愿单页面取消收藏后卡片消失 | 🔴 |
+| E2E-FAV-05 | 刷新后收藏状态保持（localStorage） | 🟡 |
+| E2E-FAV-06 | 空心愿单显示空状态 | 🟡 |
+| E2E-FAV-07 | 详情页收藏按钮同步状态 | 🟡 |
+
+#### 行程规划
+
+| 编号 | 场景 | 重要性 |
+|------|------|--------|
+| E2E-TRIP-01 | 创建新行程（完整流程） | 🔴 |
+| E2E-TRIP-02 | 创建行程表单验证（必填字段） | 🔴 |
+| E2E-TRIP-03 | 删除行程（确认对话框） | 🔴 |
+| E2E-TRIP-04 | 删除行程（取消对话框） | 🟡 |
+| E2E-TRIP-05 | 编辑行程名称即时保存 | 🔴 |
+| E2E-TRIP-06 | 切换天数标签 | 🟡 |
+| E2E-TRIP-07 | 添加自定义活动 | 🔴 |
+| E2E-TRIP-08 | 快速添加景点 | 🟡 |
+| E2E-TRIP-09 | 删除活动 | 🔴 |
+| E2E-TRIP-10 | 从详情页跳转并预选目的地 | 🟡 |
+| E2E-TRIP-11 | 空行程显示空状态 | 🟡 |
+| E2E-TRIP-12 | 刷新后行程数据保持 | 🟡 |
+
+#### 目的地详情
+
+| 编号 | 场景 | 重要性 |
+|------|------|--------|
+| E2E-DET-01 | 从列表页跳转到详情页 | 🔴 |
+| E2E-DET-02 | 显示所有详情信息 | 🟡 |
+| E2E-DET-03 | 天气组件显示 | 🟡 |
+| E2E-DET-04 | 相关推荐跳转 | 🟢 |
+| E2E-DET-05 | 无效 ID 显示 404 状态 | 🟡 |
+
+#### 404 页面
+
+| 编号 | 场景 | 重要性 |
+|------|------|--------|
+| E2E-404-01 | 无效路由显示 404 | 🔴 |
+| E2E-404-02 | "返回首页" 按钮可用 | 🟡 |
+
+### 11.3 视觉回归测试 — playwright.config.ts (project: visual)
+
+#### 页面基线截图
+
+| 编号 | 页面 | 视口 | 语言 | 重要性 |
+|------|------|------|------|--------|
+| VIS-HP-01 | HomePage | Desktop (1280×720) | zh | 🔴 |
+| VIS-HP-02 | HomePage | Mobile (375×667) | zh | 🔴 |
+| VIS-HP-03 | HomePage | Desktop | en | 🟡 |
+| VIS-DP-01 | DestinationsPage | Desktop | zh | 🔴 |
+| VIS-DP-02 | DestinationsPage | Mobile | zh | 🟡 |
+| VIS-DD-01 | DestinationDetailPage (bali) | Desktop | zh | 🔴 |
+| VIS-DD-02 | DestinationDetailPage (bali) | Mobile | zh | 🟡 |
+| VIS-FP-01 | FavoritesPage（空状态） | Desktop | zh | 🟡 |
+| VIS-FP-02 | FavoritesPage（有收藏） | Desktop | zh | 🟡 |
+| VIS-AP-01 | AboutPage | Desktop | zh | 🟡 |
+| VIS-TP-01 | TripPlannerPage（空状态） | Desktop | zh | 🟡 |
+| VIS-TP-02 | TripPlannerPage（创建弹窗） | Desktop | zh | 🟡 |
+| VIS-TE-01 | TripEditPage | Desktop | zh | 🟡 |
+| VIS-NF-01 | NotFoundPage | Desktop | zh | 🟢 |
+
+#### 组件基线截图
+
+| 编号 | 组件 | 状态 | 重要性 |
+|------|------|------|--------|
+| VIS-CT-NAV-01 | Navbar 桌面端 | 默认 | 🔴 |
+| VIS-CT-NAV-02 | Navbar 移动端（展开） | 展开菜单 | 🟡 |
+| VIS-CT-CARD-01 | DestinationCard | 未收藏 | 🔴 |
+| VIS-CT-CARD-02 | DestinationCard | 已收藏 | 🟡 |
+| VIS-CT-FILTER-01 | FilterBar | 默认 | 🟡 |
+| VIS-CT-WEATHER-01 | WeatherWidget | 晴天 | 🟡 |
+| VIS-CT-FOOTER-01 | Footer | 默认 | 🟢 |
+
+---
+
+## 12. 发现的问题与建议
+
+### 12.1 🔴 高优先级
+
+| 编号 | 问题 | 影响 | 建议 |
+|------|------|------|------|
+| ISS-01 | **完全没有 `data-testid` 属性** | 测试定位不稳定，i18n 切换后定位器失效 | 为关键交互元素添加 data-testid（见 5.4 节） |
+| ISS-02 | **aria-label 硬编码英文** | 不符合可访问性最佳实践，中文环境下屏幕阅读器体验差 | 将 aria-label 纳入 i18n 翻译键 |
+| ISS-03 | **`tests/` 目录为空** | 无任何测试覆盖 | 按 11 节场景添加 E2E、CT、Visual 测试 |
+| ISS-04 | **`<title>` 为 "temp-vite-app"** | 页面标题未正确设置，影响 SEO 和可访问性 | 在 `index.html` 中修改 title 为 "TravelVista" |
+
+### 12.2 🟡 中优先级
+
+| 编号 | 问题 | 影响 | 建议 |
+|------|------|------|------|
+| ISS-05 | **`window.confirm()` 原生对话框** | 无法自定义样式，可能导致 E2E 测试需额外处理 | 测试中注册 `page.on('dialog')` 处理 |
+| ISS-06 | **语言切换无持久化** | 刷新后恢复默认中文 | 可考虑 localStorage 持久化语言选择 |
+| ISS-07 | **搜索仅基于名称和描述** | 用户可能期望搜索更多字段（国家、景点等） | 扩展搜索范围 |
+| ISS-08 | **图片懒加载不一致** | 部分 `<img>` 有 `loading="lazy"`，部分没有 | 统一添加懒加载 |
+| ISS-09 | **行程 ID 使用 `Date.now().toString(36)`** | 在极短时间创建多个行程可能产生冲突 | 使用 crypto.randomUUID() 或加入随机因子 |
+
+### 12.3 🟢 低优先级
+
+| 编号 | 问题 | 影响 | 建议 |
+|------|------|------|------|
+| ISS-10 | 社交链接（微博/微信/Instagram）为 `<span>` 无链接 | 点击无实际操作 | 添加实际社交链接或移除手型光标 |
+| ISS-11 | 团队成员无真实头像 | 使用 👤 emoji 占位 | 添加真实头像或 SVG 占位图 |
+| ISS-12 | Carousel 无拖拽/滑动支持 | 移动端体验欠佳 | 添加触摸滑动手势支持 |
+| ISS-13 | 天气数据为硬编码 | 与实际天气无关 | 如需真实数据可接入天气 API |
+
+---
+
+## 附录 A：Playwright 配置映射
+
+| 测试类型 | 配置文件 | 项目名 | 测试目录 | npm 脚本 |
+|----------|----------|--------|----------|----------|
+| E2E | `playwright.config.ts` | `e2e` | `tests/e2e/` | `npm run test:e2e` |
+| Visual | `playwright.config.ts` | `visual` | `tests/visual/` | `npm run test:visual` |
+| CT | `playwright-ct.config.ts` | - | `tests/component/` | `npm run test:ct` |
+| Azure E2E | `playwright.service.config.ts` | `e2e` | `tests/e2e/` | `npm run test:azure:e2e` |
+| Azure Visual | `playwright.service.config.ts` | `visual` | `tests/visual/` | `npm run test:azure:visual` |
+
+## 附录 B：localStorage 数据结构
+
+### `travelvista_favorites`
+```json
+["bali", "kyoto", "paris"]
+```
+
+### `travelvista_trips`
+```json
+[
+  {
+    "id": "m1abc",
+    "name": "巴厘岛蜜月之旅",
+    "destinationId": "bali",
+    "days": [
+      {
+        "dayNumber": 1,
+        "activities": [
+          { "id": "m1xyz", "customName": "海神庙", "time": "上午 9:00", "notes": "日出时分最美" }
+        ]
+      },
+      { "dayNumber": 2, "activities": [] },
+      { "dayNumber": 3, "activities": [] }
+    ],
+    "createdAt": "2026-04-07T00:00:00.000Z",
+    "updatedAt": "2026-04-07T00:00:00.000Z"
+  }
+]
+```
+
+## 附录 C：目的地 ID 与数据对照表
+
+| ID | 中文名 | 地区 | 类型 | 评分 | 有详情数据 | 有天气数据 |
+|----|--------|------|------|------|------------|------------|
+| `bali` | 巴厘岛 | 亚洲 | 海滩 | 4.7 | ✅ | ✅ |
+| `kyoto` | 京都 | 亚洲 | 文化 | 4.8 | ✅ | ✅ |
+| `santorini` | 圣托里尼 | 欧洲 | 海滩 | 4.6 | ✅ | ✅ |
+| `paris` | 巴黎 | 欧洲 | 城市 | 4.5 | ✅ | ✅ |
+| `maldives` | 马尔代夫 | 亚洲 | 海滩 | 4.9 | ✅ | ✅ |
+| `swiss` | 瑞士 | 欧洲 | 山岳 | 4.7 | ✅ | ✅ |
+| `newyork` | 纽约 | 北美 | 城市 | 4.4 | ✅ | ✅ |
+| `chengdu` | 成都 | 亚洲 | 文化 | 4.5 | ✅ | ✅ |
+| `machupicchu` | 马丘比丘 | 南美 | 文化 | 4.8 | ✅ | ✅ |
+| `capetown` | 开普敦 | 非洲 | 山岳 | 4.5 | ✅ | ✅ |
+| `greatbarrierreef` | 大堡礁 | 大洋洲 | 海滩 | 4.7 | ✅ | ✅ |
+| `nepal` | 尼泊尔 | 亚洲 | 山岳 | 4.6 | ✅ | ✅ |
+<!-- discovery-meta
   generated: 2026-03-20T00:00:00.000Z
   scope: deep
   routes-found: 8

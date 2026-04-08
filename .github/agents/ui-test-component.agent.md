@@ -79,8 +79,27 @@ Test fixtures (`tests/fixtures/test-utils.ts`) are owned by the `playwright-ct` 
    - event callbacks
    - conditional branches
    - provider-dependent rendering
-5. Run CT.
+5. Run CT **without** `--reporter=line`. Use the default config reporter so
+   `playwright-report/` is updated on every run.
 6. Report failures without auto-fixing.
+7. Run Report Gate (see below).
+
+## Report Gate
+
+After tests complete (pass or fail), update `docs/TEST_REPORT.md`:
+
+1. Read the existing `docs/TEST_REPORT.md`.
+2. Update **only the 组件测试 section** with:
+   - Total tests passed / failed / skipped
+   - List of spec files and component names tested
+   - Test categories covered (rendering, props, events, etc.)
+   - Any failure summaries
+3. Update the **结果总览** summary table row for 组件测试.
+4. Update the **生成时间** timestamp.
+5. Do NOT overwrite sections owned by other agents (端到端测试, 视觉回归).
+
+If `docs/TEST_REPORT.md` does not exist, create it following the same template
+defined in the E2E agent.
 
 ## Boundaries
 

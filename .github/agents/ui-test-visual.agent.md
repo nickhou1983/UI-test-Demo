@@ -109,8 +109,27 @@ Escalate to `ui-test-governance` only when the user explicitly asks for:
 2. Run Configuration Gate.
 3. Apply Screenshot Stabilization setup.
 4. Generate visual specs for selected pages or routes.
-5. Run baselines or comparisons.
+5. Run baselines or comparisons **without** `--reporter=line`. Use the default
+   config reporter so `playwright-report/` is updated on every run.
 6. **Report diffs only — NEVER run `--update-snapshots` unless the user's message explicitly contains a baseline update request** (see Baseline Update Policy below).
+7. Run Report Gate (see below).
+
+## Report Gate
+
+After tests complete (pass or fail), update `docs/TEST_REPORT.md`:
+
+1. Read the existing `docs/TEST_REPORT.md`.
+2. Update **only the 视觉回归测试 section** with:
+   - Total tests passed / failed / skipped
+   - List of spec files executed
+   - Pages, viewports, and languages covered
+   - Baseline generation vs. regression comparison mode
+   - Any pixel-diff failures (with file paths and diff ratios)
+   - VLM review results summary (if VLM was enabled)
+3. Update the **视觉基线产物** listing with current snapshot file paths.
+4. Update the **结果总览** summary table row for 视觉回归.
+5. Update the **生成时间** timestamp.
+6. Do NOT overwrite sections owned by other agents (组件测试, 端到端测试).
 
 ## ⛔ Baseline Update Policy
 

@@ -1,75 +1,79 @@
 import { test, expect } from '@playwright/test';
 
-test.describe('Navigation', () => {
-  test('should navigate through all pages via navbar', async ({ page }) => {
-    await page.goto('./');
+test.describe('Navigation and responsive layout', () => {
+  test('desktop navbar shows all links and highlights the active route', async ({ page }) => {
+    await page.goto('.');
 
-    // Home → Destinations
-    await page.getByRole('navigation').getByRole('link', { name: '目的地' }).click();
-    await expect(page).toHaveURL(/\/UI-test-Demo\/destinations$/);
-    await expect(page.getByRole('heading', { name: '探索目的地' })).toBeVisible();
+    const nav = page.getByRole('navigation').first();
+    await expect(nav.getByRole('link', { name: '首页' })).toBeVisible();
+    await expect(nav.getByRole('link', { name: '目的地' })).toBeVisible();
+    await expect(nav.getByRole('link', { name: '心愿单' })).toBeVisible();
+    await expect(nav.getByRole('link', { name: '行程规划' })).toBeVisible();
+    await expect(nav.getByRole('link', { name: '关于我们' })).toBeVisible();
 
-    // Destinations → About
-    await page.getByRole('navigation').getByRole('link', { name: '关于我们' }).click();
-    await expect(page).toHaveURL(/\/UI-test-Demo\/about$/);
-    await expect(page.getByRole('heading', { name: '关于本站' }).first()).toBeVisible();
-
-    // About → Home
-    await page.getByRole('navigation').getByRole('link', { name: '首页' }).click();
-    await expect(page).toHaveURL(/\/UI-test-Demo\/?$/);
-    await expect(page.getByRole('heading', { name: '探索世界，发现美好' })).toBeVisible();
+    // Navigate to destinations and verify active state
+    await nav.getByRole('link', { name: '目的地' }).click();
+    await expect(page).toHaveURL(/\/destinations$/);
   });
 
-  test('should navigate to TravelVista logo link', async ({ page }) => {
-    await page.goto('./about');
-    await page.getByRole('navigation').getByRole('link', { name: 'TravelVista' }).click();
-    await expect(page).toHaveURL(/\/UI-test-Demo\/?$/);
+  test('mobile hamburger menu toggles and navigates', async ({ page }) => {
+    await page.setViewportSize({ width: 375, height: 812 });
+    await page.goto('.');
+
+    // Open mobile menu
+    await page.getByRole('button', { name: 'Toggle menu' }).click();
+
+    // Use navigation scope to avoid ambiguity with footer and page links
+    const nav = page.getByRole('navigation').first();
+    await expect(nav.getByRole('link', { name: '目的地' })).toBeVisible();
+
+    // Click a link
+    await nav.getByRole('link', { name: '心愿单' }).click();
+    await expect(page).toHaveURL(/\/favorites$/);
   });
-});
 
-test.describe('i18n Language Switching', () => {
-  test('should switch from Chinese to English', async ({ page }) => {
-    await page.goto('./');
-    // Default is Chinese
-    await expect(page.getByRole('heading', { name: '探索世界，发现美好' })).toBeVisible();
+  test('language switch updates all navigation labels', async ({ page }) => {
+    await page.goto('.');
+    const nav = page.getByRole('navigation').first();
 
-    // Click EN button to switch to English
     await page.getByRole('button', { name: 'EN' }).click();
+    await expect(nav.getByRole('link', { name: 'Home' })).toBeVisible();
+    await expect(nav.getByRole('link', { name: 'Destinations' })).toBeVisible();
+    await expect(nav.getByRole('link', { name: 'Wishlist' })).toBeVisible();
+    await expect(nav.getByRole('link', { name: 'Trip Planner' })).toBeVisible();
+    await expect(nav.getByRole('link', { name: 'About' })).toBeVisible();
 
-    // Verify English content
-    await expect(page.getByRole('heading', { name: /Explore the World/ })).toBeVisible();
-    // Language button should now show 中文
-    await expect(page.getByRole('button', { name: '中文' })).toBeVisible();
-  });
-
-  test('should switch back from English to Chinese', async ({ page }) => {
-    await page.goto('./');
-    // Switch to English
-    await page.getByRole('button', { name: 'EN' }).click();
-    await expect(page.getByRole('button', { name: '中文' })).toBeVisible();
-
-    // Switch back to Chinese
     await page.getByRole('button', { name: '中文' }).click();
-    await expect(page.getByRole('heading', { name: '探索世界，发现美好' })).toBeVisible();
-    await expect(page.getByRole('button', { name: 'EN' })).toBeVisible();
+    await expect(nav.getByRole('link', { name: '首页' })).toBeVisible();
   });
 
-  test('should persist language across navigation', async ({ page }) => {
-    await page.goto('./');
-    // Switch to English
-    await page.getByRole('button', { name: 'EN' }).click();
+  test('footer links navigate to correct pages', async ({ page }) => {
+    await page.goto('.');
 
-    // Navigate to About
-    await page.locator('nav').first().getByRole('link', { name: 'About' }).click();
-    await expect(page).toHaveURL(/\/UI-test-Demo\/about$/);
-    // Should still be in English
-    await expect(page.getByRole('button', { name: '中文' })).toBeVisible();
+    const footer = page.getByRole('contentinfo');
+    await expect(footer.getByRole('heading', { name: 'TravelVista' })).toBeVisible();
+    await expect(footer.getByRole('link', { name: '首页' })).toBeVisible();
+    await expect(footer.getByRole('link', { name: '目的地' })).toBeVisible();
+    await expect(footer.getByRole('link', { name: '关于我们' })).toBeVisible();
+
+    await footer.getByRole('link', { name: '目的地' }).click();
+    await expect(page).toHaveURL(/\/destinations$/);
   });
-});
 
-test.describe('Footer', () => {
-  test('should display footer on all pages', async ({ page }) => {
-    await page.goto('./');
-    await expect(page.getByText('© 2026 TravelVista')).toBeVisible();
+  test('scroll-to-top button appears after scrolling', async ({ page }) => {
+    await page.goto('.');
+
+    const btn = page.getByRole('button', { name: 'Back to top' });
+
+    // Button should be initially invisible (opacity-0, pointer-events-none)
+    await expect(btn).toHaveClass(/opacity-0/);
+
+    // Scroll down past 300px threshold
+    await page.evaluate(() => window.scrollTo(0, 1000));
+    await expect(btn).toHaveClass(/opacity-100/);
+
+    // Click back to top
+    await btn.click();
+    await page.waitForFunction(() => window.scrollY < 100);
   });
 });

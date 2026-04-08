@@ -17,7 +17,8 @@
     "test:azure:e2e": "playwright test --config=playwright.service.config.ts --project=e2e",
     "test:azure:visual": "VLM_REVIEW=false playwright test --config=playwright.service.config.ts --project=visual",
     "test:visual:vlm": "VLM_REVIEW=true playwright test --project=visual",
-    "test:azure:visual:vlm": "VLM_REVIEW=true playwright test --config=playwright.service.config.ts --project=visual"
+    "test:azure:visual:vlm": "VLM_REVIEW=true playwright test --config=playwright.service.config.ts --project=visual",
+    "generate-ui-test-collab-ppt": "node scripts/generate-ui-test-collab-ppt.cjs"
   },
   "dependencies": {
     "i18next": "^25.8.18",

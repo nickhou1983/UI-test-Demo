@@ -94,6 +94,16 @@ Refer to [playwright-vlm](../skills/playwright-vlm/SKILL.md) for implementation 
 3. CI report clearly marks which failures had VLM review and which did not.
 4. Recommend: set `VLM_REVIEW=true` only on main branch or release branches to control cost.
 
+## Report Policy Enforcement
+
+When reviewing CI/CD pipelines or governance workflows, ensure that:
+
+1. Test execution commands do **not** use `--reporter=line` alone — the HTML
+   reporter must always be included so `playwright-report/` is generated.
+2. `docs/TEST_REPORT.md` is updated as part of the test pipeline when feasible.
+3. In CI, the report update step should run **after** all test steps, even if
+   tests fail, so the report captures failure information.
+
 ## Boundaries
 
 1. Do not generate day-to-day CT, E2E, or Visual tests unless explicitly asked to continue after governance analysis.
