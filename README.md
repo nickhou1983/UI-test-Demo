@@ -47,87 +47,50 @@ npm run build
 ### 全局架构
 
 ```mermaid
-flowchart TB
-    subgraph Entry["🎯 入口层"]
-        UT["ui-test<br/>(路由入口)"]
-    end
+flowchart LR
+    USER["👤 用户请求"] --> UT
 
-    subgraph Routing["📌 路由决策"]
-        direction TB
-        R1{"组件测试？<br/>CT / props / events"}
-        R2{"E2E 测试？<br/>页面流 / 用户旅程"}
-        R3{"视觉回归？<br/>截图 / 基线"}
-        R4{"分析优先？<br/>探索代码库"}
-        R5{"云端 / CI / VLM？<br/>Azure / 治理"}
-    end
+    UT{"🎯 ui-test<br/>路由入口"}
+    UT -->|"组件测试"| CT
+    UT -->|"E2E 测试"| E2E
+    UT -->|"视觉回归"| VIS
+    UT -->|"分析探索"| DIS
+    UT -->|"云端/CI/VLM"| GOV
 
-    subgraph Discovery["🔍 Discovery 共享层"]
+    subgraph Discovery["🔍 共享 Discovery 层"]
         DIS["ui-test-discovery"]
-        DIS_MIN["最小检查<br/>• 代码库 vs URL<br/>• Playwright 就绪<br/>• 配置文件验证"]
-        DIS_STD["标准发现<br/>• 框架/构建检测<br/>• 路由清单<br/>• 组件清单<br/>• i18n 检测"]
-        DIS_DEEP["深度发现<br/>• 运行时 DOM 探索<br/>• Locator 策略<br/>• Journey 映射<br/>• 副作用清单"]
+        DIS --- D1["最小检查<br/>Playwright 就绪 · 配置验证"]
+        DIS --- D2["标准发现<br/>框架检测 · 路由/组件清单 · i18n"]
+        DIS --- D3["深度发现<br/>DOM 探索 · Locator · Journey · 副作用"]
     end
 
-    subgraph Agents["⚙️ 专业 Agent 层"]
-        CT["ui-test-component<br/>组件测试"]
-        E2E["ui-test-e2e<br/>端到端测试"]
-        VIS["ui-test-visual<br/>视觉回归测试"]
-        GOV["ui-test-governance<br/>治理 & 云端"]
+    subgraph Testing["⚙️ 专业测试 Agent"]
+        CT["🧩 ui-test-component<br/>组件测试"]
+        E2E["🌐 ui-test-e2e<br/>端到端测试"]
+        VIS["📸 ui-test-visual<br/>视觉回归"]
     end
 
-    subgraph Skills["📦 Skill 层"]
-        SK_CT["playwright-ct"]
-        SK_E2E["playwright-e2e"]
-        SK_VIS["playwright-visual"]
-        SK_CFG["playwright-config"]
-        SK_AZ["playwright-azure"]
-        SK_VLM["playwright-vlm"]
-        SK_EXP["playwright-explore"]
+    subgraph Governance["🏛️ 治理层"]
+        GOV["ui-test-governance<br/>Azure · CI/CD · VLM"]
     end
 
-    subgraph Outputs["📊 输出"]
-        RPT["docs/TEST_REPORT.md"]
-        HTML["playwright-report/"]
-        BASE["tests/visual/__screenshots__/"]
-    end
-
-    UT --> R1
-    R1 -->|是| CT
-    R1 -->|否| R2
-    R2 -->|是| E2E
-    R2 -->|否| R3
-    R3 -->|是| VIS
-    R3 -->|否| R4
-    R4 -->|是| DIS
-    R4 -->|否| R5
-    R5 -->|是| GOV
-    R5 -->|否| DIS
-
-    CT -.->|Discovery Gate| DIS
-    E2E -.->|Discovery Gate| DIS
-    VIS -.->|Discovery Gate| DIS
-
-    DIS --> DIS_MIN --> DIS_STD --> DIS_DEEP
-
-    CT --> SK_CT
-    CT --> SK_CFG
-    E2E --> SK_E2E
-    E2E --> SK_CFG
-    VIS --> SK_VIS
-    VIS --> SK_CFG
-    GOV --> SK_AZ
-    GOV --> SK_VLM
-    GOV --> SK_CFG
-
+    CT -.->|"需要上下文"| DIS
+    E2E -.->|"需要上下文"| DIS
+    VIS -.->|"需要上下文"| DIS
     VIS -.->|"升级 (用户显式请求)"| GOV
 
-    CT -->|"更新: 组件测试"| RPT
-    E2E -->|"更新: 端到端测试"| RPT
-    VIS -->|"更新: 视觉回归"| RPT
-    CT --> HTML
-    E2E --> HTML
-    VIS --> HTML
-    VIS --> BASE
+    CT -->|playwright-ct| SK_CT["🔧 Skill"]
+    E2E -->|playwright-e2e| SK_E2E["🔧 Skill"]
+    VIS -->|playwright-visual| SK_VIS["🔧 Skill"]
+    GOV -->|"playwright-azure · playwright-vlm"| SK_GOV["🔧 Skill"]
+
+    CT & E2E & VIS -->|playwright-config| SK_CFG["🔧 配置 Skill"]
+
+    CT --> RPT["📄 TEST_REPORT.md<br/>组件测试段落"]
+    E2E --> RPT2["📄 TEST_REPORT.md<br/>E2E 段落"]
+    VIS --> RPT3["📄 TEST_REPORT.md<br/>视觉回归段落"]
+    CT & E2E & VIS --> HTML["📊 playwright-report/"]
+    VIS --> BASE["🖼️ 视觉基线截图"]
 ```
 
 ### 路由决策说明
