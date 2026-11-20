@@ -32,6 +32,7 @@ export default class VlmReporter implements Reporter {
   private vlmCallCount = 0;
 
   onBegin(config: FullConfig, _suite: Suite): void {
+    void _suite;
     this.outputDir = config.configFile ? dirname(config.configFile) : config.rootDir;
   }
 
@@ -76,7 +77,7 @@ export default class VlmReporter implements Reporter {
       testRunStatus: result.status,
       vlmEnabled: process.env.VLM_REVIEW === 'true',
       vlmCallCount: this.vlmCallCount,
-      maxCalls: Number(process.env.VLM_MAX_CALLS) || 10,
+      maxCalls: Number(process.env.VLM_MAX_CALLS) || 20,
       confidenceThreshold: Number(process.env.VLM_CONFIDENCE_THRESHOLD) || 0.7,
       summary: {
         total: this.entries.length,

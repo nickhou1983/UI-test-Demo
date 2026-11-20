@@ -13,6 +13,7 @@
     "test:ct": "playwright test -c playwright-ct.config.ts",
     "test:all": "VLM_REVIEW=false playwright test && playwright test -c playwright-ct.config.ts",
     "test:update-snapshots": "VLM_REVIEW=false playwright test --project=visual --update-snapshots",
+    "test:visual:linux-baselines": "bash scripts/update-linux-baselines.sh",
     "test:azure": "VLM_REVIEW=false playwright test --config=playwright.service.config.ts",
     "test:azure:e2e": "playwright test --config=playwright.service.config.ts --project=e2e",
     "test:azure:visual": "VLM_REVIEW=false playwright test --config=playwright.service.config.ts --project=visual",

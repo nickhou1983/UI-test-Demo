@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from '../fixtures/e2e-test';
 
 test.describe('Destination detail page', () => {
   test('shows full detail content for Bali', async ({ page }) => {

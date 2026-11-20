@@ -1,0 +1,2187 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>智能 UI 自动化测试方案全景 — AI 探路 × Playwright 守门 × VLM 视觉裁决</title>
+
+    <!-- Google Fonts: Manrope + Noto Sans SC + JetBrains Mono -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Manrope:wght@500;600;700;800&family=Noto+Sans+SC:wght@400;500;700;900&display=swap" rel="stylesheet" />
+
+    <style>
+        /* ===========================================
+           CSS CUSTOM PROPERTIES (THEME TOKENS)
+           Change these variables to customize palette & typography
+           =========================================== */
+        :root {
+            --stage-bg: #050811;
+            --slide-bg: #0B1120;
+
+            /* Dark Surface Palette */
+            --dark-bg: #0B1120;
+            --dark-card: #131C31;
+            --dark-card-alt: #18243F;
+            --dark-border: #263554;
+
+            /* Light Surface Palette */
+            --light-bg: #F8FAFC;
+            --light-card: #FFFFFF;
+            --light-subtle: #F1F5F9;
+            --light-border: #E2E8F0;
+
+            /* Accent Palette */
+            --teal: #0EA5E9;
+            --cyan: #22D3EE;
+            --blue: #3B82F6;
+            --purple: #8B5CF6;
+            --mint: #10B981;
+            --amber: #F59E0B;
+            --coral: #F43F5E;
+
+            /* Typography Hierarchy */
+            --ink: #0F172A;
+            --slate-700: #334155;
+            --slate-500: #64748B;
+            --slate-400: #94A3B8;
+            --slate-300: #CBD5E1;
+            --white: #FFFFFF;
+
+            --font-display: 'Manrope', 'Noto Sans SC', sans-serif;
+            --font-body: 'Noto Sans SC', 'Manrope', sans-serif;
+            --font-mono: 'JetBrains Mono', monospace;
+
+            --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+            --duration-normal: 0.55s;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        /* ===========================================
+           FIXED 16:9 STAGE: MANDATORY BASE STYLES
+           Include this ENTIRE file in every presentation.
+           Slides are authored at 1920×1080 and scaled as a whole.
+           =========================================== */
+
+        /* 1. Lock the browser viewport */
+        html,
+        body {
+            width: 100%;
+            height: 100%;
+            margin: 0;
+            overflow: hidden;
+            background: var(--stage-bg, #000);
+        }
+
+        /* 2. Full-window deck viewport */
+        .deck-viewport {
+            position: fixed;
+            inset: 0;
+            overflow: hidden;
+            background: var(--stage-bg, #000);
+        }
+
+        /* 3. Fixed 16:9 design canvas.
+           JavaScript sets transform: translate(...) scale(...). */
+        .deck-stage {
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 1920px;
+            height: 1080px;
+            overflow: hidden;
+            transform-origin: 0 0;
+            background: var(--slide-bg, #fff);
+        }
+
+        /* 4. Slides stack inside the fixed stage.
+           Content must be laid out at 1920×1080, not reflowed per device. */
+        .slide {
+            position: absolute;
+            inset: 0;
+            width: 1920px;
+            height: 1080px;
+            overflow: hidden;
+            display: block;
+            visibility: hidden;
+            opacity: 0;
+            pointer-events: none;
+            background: var(--slide-bg, #fff);
+        }
+
+        .slide.active,
+        .slide.visible {
+            visibility: visible;
+            opacity: 1;
+            pointer-events: auto;
+            z-index: 1;
+        }
+
+        /* 5. Keep media inside authored slide bounds */
+        img,
+        video,
+        canvas,
+        svg {
+            max-width: 100%;
+            max-height: 100%;
+        }
+
+        /* 6. Presentation chrome stays outside the slide design system */
+        .deck-controls {
+            position: fixed;
+            left: 50%;
+            bottom: 22px;
+            transform: translateX(-50%);
+            z-index: 1000;
+        }
+
+        /* 7. Print one fixed-size slide per page */
+        @media print {
+            html,
+            body {
+                width: 1920px;
+                height: auto;
+                overflow: visible;
+                background: #fff;
+            }
+
+            .deck-viewport {
+                position: static;
+                overflow: visible;
+                background: #fff;
+            }
+
+            .deck-stage {
+                position: static;
+                width: auto;
+                height: auto;
+                transform: none !important;
+                background: none;
+            }
+
+            .slide {
+                position: relative;
+                display: block !important;
+                visibility: visible !important;
+                opacity: 1 !important;
+                pointer-events: auto !important;
+                width: 1920px;
+                height: 1080px;
+                break-after: page;
+                page-break-after: always;
+            }
+
+            .slide:last-child {
+                break-after: auto;
+                page-break-after: auto;
+            }
+
+            .deck-controls {
+                display: none !important;
+            }
+        }
+
+        /* 8. Reduced motion */
+        @media (prefers-reduced-motion: reduce) {
+            *,
+            *::before,
+            *::after {
+                animation-duration: 0.01ms !important;
+                transition-duration: 0.2s !important;
+            }
+        }
+
+        /* ===========================================
+           ANIMATIONS & REVEAL SYSTEM
+           =========================================== */
+        .reveal {
+            opacity: 0;
+            transform: translateY(24px);
+            transition: opacity var(--duration-normal) var(--ease-out-expo),
+                        transform var(--duration-normal) var(--ease-out-expo);
+        }
+
+        .slide.visible .reveal {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .reveal-d1 { transition-delay: 0.06s; }
+        .reveal-d2 { transition-delay: 0.14s; }
+        .reveal-d3 { transition-delay: 0.22s; }
+        .reveal-d4 { transition-delay: 0.30s; }
+
+        /* ===========================================
+           SLIDE SURFACE & HEADER / FOOTER SYSTEM
+           =========================================== */
+        .slide-dark {
+            background:
+                radial-gradient(circle at 88% 14%, rgba(14, 165, 233, 0.14), transparent 36%),
+                radial-gradient(circle at 10% 88%, rgba(16, 185, 129, 0.10), transparent 40%),
+                var(--dark-bg);
+            color: var(--white);
+            font-family: var(--font-body);
+        }
+
+        .slide-light {
+            background:
+                radial-gradient(circle at 90% 10%, rgba(14, 165, 233, 0.07), transparent 34%),
+                var(--light-bg);
+            color: var(--ink);
+            font-family: var(--font-body);
+        }
+
+        .top-accent-strip {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 6px;
+            background: linear-gradient(90deg, var(--teal), var(--cyan), var(--mint), var(--purple));
+        }
+
+        .slide-inner {
+            position: relative;
+            width: 1920px;
+            height: 1080px;
+            padding: 52px 88px 82px 88px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .slide-header {
+            margin-bottom: 28px;
+            flex-shrink: 0;
+        }
+
+        .section-kicker {
+            font-family: var(--font-mono);
+            font-size: 14px;
+            font-weight: 700;
+            letter-spacing: 0.10em;
+            color: var(--teal);
+            margin-bottom: 8px;
+        }
+
+        .slide-dark .section-kicker {
+            color: var(--cyan);
+        }
+
+        .slide-title {
+            font-family: var(--font-display);
+            font-size: 40px;
+            font-weight: 800;
+            line-height: 1.2;
+            margin-bottom: 8px;
+        }
+
+        .slide-subtitle {
+            font-size: 19px;
+            color: var(--slate-500);
+            line-height: 1.45;
+        }
+
+        .slide-dark .slide-subtitle {
+            color: var(--slate-300);
+        }
+
+        .slide-body {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            min-height: 0;
+        }
+
+        .slide-footer {
+            position: absolute;
+            left: 88px;
+            right: 88px;
+            bottom: 26px;
+            padding-top: 12px;
+            border-top: 1px solid var(--light-border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-family: var(--font-mono);
+            font-size: 14px;
+            color: var(--slate-500);
+        }
+
+        .slide-dark .slide-footer {
+            border-top-color: var(--dark-border);
+            color: var(--slate-400);
+        }
+
+        /* ===========================================
+           REUSABLE CARD & BADGE COMPONENTS
+           =========================================== */
+        .card-dark {
+            background: var(--dark-card);
+            border: 1px solid var(--dark-border);
+            border-radius: 14px;
+            padding: 24px 28px;
+            box-shadow: 0 12px 28px rgba(0, 0, 0, 0.26);
+        }
+
+        .card-dark-alt {
+            background: var(--dark-card-alt);
+            border: 1px solid var(--dark-border);
+            border-radius: 12px;
+            padding: 20px 24px;
+        }
+
+        .card-light {
+            background: var(--light-card);
+            border: 1px solid var(--light-border);
+            border-radius: 14px;
+            padding: 24px 28px;
+            box-shadow: 0 8px 24px rgba(15, 23, 42, 0.05);
+        }
+
+        .card-light-subtle {
+            background: var(--light-subtle);
+            border: 1px solid var(--light-border);
+            border-radius: 12px;
+            padding: 18px 22px;
+        }
+
+        .pill-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 5px 14px;
+            border-radius: 999px;
+            font-family: var(--font-mono);
+            font-size: 13px;
+            font-weight: 700;
+        }
+
+        .pill-teal { background: rgba(14, 165, 233, 0.15); color: var(--teal); border: 1px solid rgba(14, 165, 233, 0.35); }
+        .pill-cyan { background: rgba(34, 211, 238, 0.14); color: var(--cyan); border: 1px solid rgba(34, 211, 238, 0.35); }
+        .pill-mint { background: rgba(16, 185, 129, 0.15); color: var(--mint); border: 1px solid rgba(16, 185, 129, 0.35); }
+        .pill-purple { background: rgba(139, 92, 246, 0.15); color: #A78BFA; border: 1px solid rgba(139, 92, 246, 0.35); }
+        .pill-amber { background: rgba(245, 158, 11, 0.15); color: var(--amber); border: 1px solid rgba(245, 158, 11, 0.35); }
+        .pill-coral { background: rgba(244, 63, 94, 0.15); color: var(--coral); border: 1px solid rgba(244, 63, 94, 0.35); }
+
+        .code-chip {
+            font-family: var(--font-mono);
+            font-size: 14px;
+            background: rgba(15, 23, 42, 0.65);
+            color: var(--cyan);
+            padding: 10px 14px;
+            border-radius: 8px;
+            border: 1px solid var(--dark-border);
+            display: block;
+            line-height: 1.45;
+        }
+
+        .slide-light .code-chip {
+            background: #0F172A;
+            color: var(--cyan);
+            border-color: #1E293B;
+        }
+
+        /* ===========================================
+           GRID LAYOUT UTILITIES (1920×1080 FIXED)
+           =========================================== */
+        .grid-2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 28px; }
+        .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 26px; }
+        .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 22px; }
+        .grid-5 { display: grid; grid-template-columns: repeat(5, 1fr); gap: 18px; }
+
+        /* ===========================================
+           TABLE STYLES
+           =========================================== */
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 15px;
+        }
+
+        .data-table th,
+        .data-table td {
+            padding: 11px 16px;
+            text-align: left;
+            border: 1px solid var(--dark-border);
+        }
+
+        .slide-light .data-table th,
+        .slide-light .data-table td {
+            border-color: var(--light-border);
+        }
+
+        .data-table th {
+            font-family: var(--font-display);
+            font-weight: 700;
+            background: rgba(24, 36, 63, 0.9);
+            color: var(--cyan);
+        }
+
+        .slide-light .data-table th {
+            background: var(--light-subtle);
+            color: var(--ink);
+        }
+
+        /* ===========================================
+           NAVIGATION CONTROLS & INLINE EDIT UI
+           =========================================== */
+        .deck-controls {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 8px 18px;
+            border-radius: 999px;
+            background: rgba(15, 23, 42, 0.86);
+            border: 1px solid rgba(148, 163, 184, 0.25);
+            backdrop-filter: blur(10px);
+            color: #F8FAFC;
+            font-family: var(--font-mono);
+            font-size: 13px;
+            box-shadow: 0 10px 28px rgba(0, 0, 0, 0.35);
+        }
+
+        .nav-btn {
+            background: transparent;
+            border: 1px solid rgba(148, 163, 184, 0.3);
+            color: #F8FAFC;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 14px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.2s ease, border-color 0.2s ease;
+        }
+
+        .nav-btn:hover {
+            background: rgba(34, 211, 238, 0.2);
+            border-color: var(--cyan);
+        }
+
+        .nav-divider {
+            width: 1px;
+            height: 18px;
+            background: rgba(148, 163, 184, 0.28);
+            margin: 0 2px;
+        }
+
+        .fullscreen-btn {
+            width: auto;
+            border-radius: 999px;
+            padding: 0 12px;
+            gap: 6px;
+            font-family: var(--font-mono);
+            font-size: 12px;
+            font-weight: 600;
+            letter-spacing: 0.02em;
+        }
+
+        .fullscreen-btn svg {
+            width: 14px;
+            height: 14px;
+            stroke: currentColor;
+            stroke-width: 2;
+            fill: none;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+            flex-shrink: 0;
+        }
+
+        .fullscreen-btn.is-fullscreen {
+            background: rgba(34, 211, 238, 0.16);
+            border-color: var(--cyan);
+            color: var(--cyan);
+        }
+
+        .progress-dots {
+            display: flex;
+            gap: 6px;
+            align-items: center;
+        }
+
+        .progress-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 999px;
+            background: rgba(148, 163, 184, 0.35);
+            border: none;
+            cursor: pointer;
+            transition: width 0.25s ease, background 0.25s ease;
+        }
+
+        .progress-dot.active {
+            width: 22px;
+            background: var(--cyan);
+        }
+
+        /* Inline editing hotzone & button (JS-controlled hover with 400ms grace period) */
+        .edit-hotzone {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 80px;
+            height: 80px;
+            z-index: 10000;
+            cursor: pointer;
+        }
+
+        .edit-toggle {
+            position: fixed;
+            top: 18px;
+            left: 18px;
+            padding: 8px 14px;
+            border-radius: 999px;
+            background: rgba(15, 23, 42, 0.9);
+            border: 1px solid var(--cyan);
+            color: var(--white);
+            font-family: var(--font-mono);
+            font-size: 12px;
+            cursor: pointer;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+            z-index: 10001;
+        }
+
+        .edit-toggle.show,
+        .edit-toggle.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .edit-toggle.active {
+            background: var(--mint);
+            border-color: var(--mint);
+            color: #052E16;
+            font-weight: 700;
+        }
+
+        body.editing-active [contenteditable="true"] {
+            outline: 1px dashed rgba(34, 211, 238, 0.55);
+            outline-offset: 3px;
+        }
+    </style>
+</head>
+<body>
+    <!-- Inline Edit Controls -->
+    <div class="edit-hotzone" id="editHotzone" title="Hover or click to toggle inline edit mode (E)"></div>
+    <button class="edit-toggle" id="editToggle" title="Toggle inline editing (E) · Save HTML (Ctrl/Cmd+S)">✏️ Edit (E)</button>
+
+    <div class="deck-viewport">
+        <main class="deck-stage" id="deckStage">
+
+            <!-- ===========================================
+                 SLIDE 01 — COVER (DARK)
+                 =========================================== -->
+            <section class="slide slide-dark active visible" data-title="封面：智能 UI 自动化测试方案全景">
+                <div class="top-accent-strip"></div>
+                <div class="slide-inner" style="justify-content: center;">
+                    <div style="display: grid; grid-template-columns: 1120px 568px; gap: 48px; align-items: center; height: 840px;">
+                        <div class="reveal">
+                            <div class="pill-badge pill-cyan" style="margin-bottom: 28px; font-size: 15px; padding: 8px 20px;">
+                                <span>● AGENTIC UI TESTING ARCHITECTURE · V3</span>
+                            </div>
+                            <h1 style="font-family: var(--font-display); font-size: 74px; font-weight: 800; line-height: 1.15; margin-bottom: 22px;">
+                                智能 UI 自动化测试<br />
+                                <span style="color: var(--cyan);">方案全景与工程实践</span>
+                            </h1>
+                            <div style="font-size: 30px; font-weight: 700; color: var(--mint); margin-bottom: 26px;">
+                                AI 多通道动态探路 × Playwright 确定性守门 × VLM 视觉语义裁决
+                            </div>
+                            <p style="font-size: 21px; line-height: 1.65; color: var(--slate-300); margin-bottom: 42px; max-width: 1020px;">
+                                基于 7 个专业 Agent 与 9 个可复用 Skill 的正交协同架构，打通源码 AST、Browser Use、playwright-cli 与 Computer Use 四条探索通道，在本地与 Azure 云端构筑零脆性、全可观测的质量门禁。
+                            </p>
+                            <div class="grid-3">
+                                <div class="card-dark-alt">
+                                    <div style="font-family: var(--font-mono); font-size: 13px; color: var(--cyan); font-weight: 700; margin-bottom: 6px;">EXPLORE · 四通道探路</div>
+                                    <div style="font-size: 19px; font-weight: 700;">源码 + 浏览器 + CLI + 桌面</div>
+                                </div>
+                                <div class="card-dark-alt">
+                                    <div style="font-family: var(--font-mono); font-size: 13px; color: var(--mint); font-weight: 700; margin-bottom: 6px;">ENFORCE · 六步质量门控</div>
+                                    <div style="font-size: 19px; font-weight: 700;">0 Token 毫秒级确定性回归</div>
+                                </div>
+                                <div class="card-dark-alt">
+                                    <div style="font-family: var(--font-mono); font-size: 13px; color: #A78BFA; font-weight: 700; margin-bottom: 6px;">ADJUDICATE · 双层视觉漏斗</div>
+                                    <div style="font-size: 19px; font-weight: 700;">像素比对 + GPT-4o 语义降噪</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="reveal reveal-d2" style="display: grid; gap: 18px;">
+                            <div class="card-dark" style="display: flex; justify-content: space-between; align-items: center;">
+                                <div style="font-family: var(--font-display); font-size: 46px; font-weight: 800; color: var(--cyan);">7 × 9</div>
+                                <div style="text-align: right;">
+                                    <div style="font-size: 21px; font-weight: 700;">Agents × Skills 矩阵</div>
+                                    <div style="font-size: 15px; color: var(--slate-400);">职责正交 · 单一配置权威</div>
+                                </div>
+                            </div>
+                            <div class="card-dark" style="display: flex; justify-content: space-between; align-items: center;">
+                                <div style="font-family: var(--font-display); font-size: 46px; font-weight: 800; color: var(--mint);">4 通道</div>
+                                <div style="text-align: right;">
+                                    <div style="font-size: 21px; font-weight: 700;">全边界智能探索机制</div>
+                                    <div style="font-size: 15px; color: var(--slate-400);">穿透扫码登录与系统原生文件框</div>
+                                </div>
+                            </div>
+                            <div class="card-dark" style="display: flex; justify-content: space-between; align-items: center;">
+                                <div style="font-family: var(--font-display); font-size: 46px; font-weight: 800; color: #A78BFA;">30+ 用例</div>
+                                <div style="text-align: right;">
+                                    <div style="font-size: 21px; font-weight: 700;">9 CT + 21 E2E 完整金字塔</div>
+                                    <div style="font-size: 15px; color: var(--slate-400);">覆盖 8 条路由与双语全交互</div>
+                                </div>
+                            </div>
+                            <div class="card-dark" style="display: flex; justify-content: space-between; align-items: center;">
+                                <div style="font-family: var(--font-display); font-size: 46px; font-weight: 800; color: var(--amber);">24 快照</div>
+                                <div style="text-align: right;">
+                                    <div style="font-size: 21px; font-weight: 700;">双端 × 双语视觉基线</div>
+                                    <div style="font-size: 15px; color: var(--slate-400);">五步确定性去抖 + VLM 语义复核</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="slide-footer">
+                        <span>TravelVista · Agentic UI Testing Architecture (7 Agents × 9 Skills × 4 Exploration Channels)</span>
+                        <span>01 / 13</span>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ===========================================
+                 SLIDE 02 — 5-GENERATION EVOLUTION (LIGHT)
+                 =========================================== -->
+            <section class="slide slide-light" data-title="UI 自动化测试五代演进与技术跃迁">
+                <div class="top-accent-strip"></div>
+                <div class="slide-inner">
+                    <div class="slide-header reveal">
+                        <div class="section-kicker">01 / INDUSTRY EVOLUTION</div>
+                        <h2 class="slide-title">UI 自动化测试五代演进与技术跃迁</h2>
+                        <p class="slide-subtitle">从“死板坐标与脆弱脚本”演进到“Agent 多模态探索 + 代码级确定性回归 + VLM 视觉裁决”的第五代混合架构</p>
+                    </div>
+
+                    <div class="slide-body">
+                        <div class="grid-5 reveal reveal-d1" style="height: 540px;">
+                            <div class="card-light" style="display: flex; flex-direction: column; justify-content: space-between;">
+                                <div>
+                                    <span class="pill-badge pill-amber" style="margin-bottom: 14px;">GEN 1.0 · 1990s–2000s</span>
+                                    <h3 style="font-size: 23px; font-weight: 800; margin-bottom: 8px;">坐标与图像录制</h3>
+                                    <div style="font-family: var(--font-mono); font-size: 13px; color: var(--slate-500); margin-bottom: 16px;">QTP / WinRunner / Sikuli</div>
+                                    <p style="font-size: 16px; line-height: 1.6; color: var(--slate-700);">强绑定屏幕物理分辨率与绝对坐标 (x, y)，缺乏任何业务与 DOM 语义理解。</p>
+                                </div>
+                                <div class="card-light-subtle" style="color: var(--coral); font-size: 15px; font-weight: 700;">
+                                    ✕ 痛点：分辨率或字号微调即全线崩溃，无法跨机器复用。
+                                </div>
+                            </div>
+
+                            <div class="card-light" style="display: flex; flex-direction: column; justify-content: space-between;">
+                                <div>
+                                    <span class="pill-badge pill-amber" style="margin-bottom: 14px;">GEN 2.0 · 2004–2016</span>
+                                    <h3 style="font-size: 23px; font-weight: 800; margin-bottom: 8px;">WebDriver 协议驱动</h3>
+                                    <div style="font-family: var(--font-mono); font-size: 13px; color: var(--slate-500); margin-bottom: 16px;">Selenium / Appium</div>
+                                    <p style="font-size: 16px; line-height: 1.6; color: var(--slate-700);">引入浏览器驱动与 DOM 树查询，但重度依赖冗长 XPath / CSS 层级路径与手动硬等待。</p>
+                                </div>
+                                <div class="card-light-subtle" style="color: var(--coral); font-size: 15px; font-weight: 700;">
+                                    ✕ 痛点：跨进程通信慢，充斥 sleep(5000)，异步动画下 Flaky 率极高。
+                                </div>
+                            </div>
+
+                            <div class="card-light" style="display: flex; flex-direction: column; justify-content: space-between;">
+                                <div>
+                                    <span class="pill-badge pill-teal" style="margin-bottom: 14px;">GEN 3.0 · 2017–2022</span>
+                                    <h3 style="font-size: 23px; font-weight: 800; margin-bottom: 8px;">现代内核级自等待</h3>
+                                    <div style="font-family: var(--font-mono); font-size: 13px; color: var(--teal); margin-bottom: 16px;">Playwright / Cypress</div>
+                                    <p style="font-size: 16px; line-height: 1.6; color: var(--slate-700);">WebSocket 直连浏览器内核，原生内置 Auto-wait、getByRole 无障碍定位与 Trace 回放。</p>
+                                </div>
+                                <div class="card-light-subtle" style="color: var(--slate-700); font-size: 15px; font-weight: 700;">
+                                    △ 瓶颈：手工编写覆盖全站路由与多视口快照的成本高昂。
+                                </div>
+                            </div>
+
+                            <div class="card-light" style="display: flex; flex-direction: column; justify-content: space-between;">
+                                <div>
+                                    <span class="pill-badge pill-purple" style="margin-bottom: 14px;">GEN 4.0 · 2023–2024</span>
+                                    <h3 style="font-size: 23px; font-weight: 800; margin-bottom: 8px;">纯大模型实时操作</h3>
+                                    <div style="font-family: var(--font-mono); font-size: 13px; color: var(--purple); margin-bottom: 16px;">Pure LLM Browser Agent</div>
+                                    <p style="font-size: 16px; line-height: 1.6; color: var(--slate-700);">用自然语言直接让大模型看截图/DOM 实时推理每一步点击，免手写测试脚本。</p>
+                                </div>
+                                <div class="card-light-subtle" style="color: var(--coral); font-size: 15px; font-weight: 700;">
+                                    ✕ 痛点：单次耗时数分钟、Token 昂贵、结果非确定性，无法跑 CI 门禁。
+                                </div>
+                            </div>
+
+                            <div class="card-dark" style="display: flex; flex-direction: column; justify-content: space-between; border-color: var(--teal);">
+                                <div>
+                                    <span class="pill-badge pill-cyan" style="margin-bottom: 14px;">GEN 5.0 · 2025+ 本方案</span>
+                                    <h3 style="font-size: 23px; font-weight: 800; margin-bottom: 8px; color: var(--white);">Agentic 混合协同架构</h3>
+                                    <div style="font-family: var(--font-mono); font-size: 13px; color: var(--cyan); margin-bottom: 16px;">AI 探路 × 代码守门 × VLM</div>
+                                    <p style="font-size: 16px; line-height: 1.6; color: var(--slate-300);">探索期用 4 通道 Agent 感知页面生成契约；回归期用 Playwright 毫秒级守门；视觉异常触发 VLM。</p>
+                                </div>
+                                <div class="card-dark-alt" style="color: var(--mint); font-size: 15px; font-weight: 700;">
+                                    ★ 兼具 AI 探索的高覆盖自愈力与代码级 CI 门禁的毫秒级确定性！
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="card-dark reveal reveal-d2" style="padding: 22px 28px;">
+                            <div style="font-family: var(--font-display); font-size: 17px; font-weight: 800; color: var(--cyan); margin-bottom: 14px;">
+                                本方案实现的四大代际技术跃迁（Why Gen 5.0 Hybrid Architecture Wins）
+                            </div>
+                            <div class="grid-4">
+                                <div>
+                                    <div style="font-weight: 700; color: var(--mint); font-size: 16px; margin-bottom: 4px;">① 定位范式跃迁</div>
+                                    <div style="font-size: 14px; color: var(--slate-300);">从易碎 XPath 跃迁至 W3C 无障碍语义树 (getByRole) 契约</div>
+                                </div>
+                                <div>
+                                    <div style="font-weight: 700; color: var(--cyan); font-size: 16px; margin-bottom: 4px;">② 同步机制跃迁</div>
+                                    <div style="font-size: 14px; color: var(--slate-300);">从硬编码 sleep 跃迁至内核级 Auto-Wait + 五步确定性去抖</div>
+                                </div>
+                                <div>
+                                    <div style="font-weight: 700; color: #A78BFA; font-size: 16px; margin-bottom: 4px;">③ 金字塔分层跃迁</div>
+                                    <div style="font-size: 14px; color: var(--slate-300);">从臃肿纯 E2E 拆解为 CT 组件挂载 (9) + E2E 旅程 (21) + 视觉快照 (24)</div>
+                                </div>
+                                <div>
+                                    <div style="font-weight: 700; color: var(--amber); font-size: 16px; margin-bottom: 4px;">④ 视觉裁决跃迁</div>
+                                    <div style="font-size: 14px; color: var(--slate-300);">从“一像素差异即误报”进化为原生像素比对 + GPT-4o VLM 语义复核</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="slide-footer">
+                        <span>TravelVista · Agentic UI Testing Architecture</span>
+                        <span>02 / 13</span>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ===========================================
+                 SLIDE 03 — EXECUTIVE SUMMARY (LIGHT)
+                 =========================================== -->
+            <section class="slide slide-light" data-title="痛点与核心设计范式">
+                <div class="top-accent-strip"></div>
+                <div class="slide-inner">
+                    <div class="slide-header reveal">
+                        <div class="section-kicker">02 / EXECUTIVE SUMMARY &amp; CORE PARADIGM</div>
+                        <h2 class="slide-title">痛点与核心设计范式：AI 动态探路 × Playwright 确定性守门</h2>
+                        <p class="slide-subtitle">解决“传统脚本易碎难维护”与“纯 AI 执行慢贵且不确定”的两难困境，让最擅长的技术处理最匹配的生命周期阶段</p>
+                    </div>
+
+                    <div class="slide-body">
+                        <div style="display: grid; grid-template-columns: 740px 976px; gap: 28px; height: 740px;" class="reveal reveal-d1">
+                            <div class="card-light" style="display: flex; flex-direction: column; justify-content: space-between;">
+                                <div>
+                                    <span class="pill-badge pill-coral" style="margin-bottom: 14px;">INDUSTRY DILEMMA · 行业三大核心痛点</span>
+                                    <h3 style="font-size: 26px; font-weight: 800; margin-bottom: 22px;">为什么传统 UI 自动化与纯 AI 测试都难以落地？</h3>
+                                </div>
+                                <div style="display: grid; gap: 18px; flex: 1;">
+                                    <div class="card-light-subtle">
+                                        <div style="font-size: 19px; font-weight: 800; color: var(--coral); margin-bottom: 6px;">01 · 手写选择器极度脆弱，前端改样式即崩</div>
+                                        <p style="font-size: 15.5px; line-height: 1.55; color: var(--slate-700);">传统脚本耦合 CSS 类名或 DOM 层级，缺乏前置契约探测；同名按钮与多语言切换频繁触发 Strict Mode 冲突。</p>
+                                    </div>
+                                    <div class="card-light-subtle">
+                                        <div style="font-size: 19px; font-weight: 800; color: var(--amber); margin-bottom: 6px;">02 · 纯 AI Agent 跑回归：慢、贵、不可复现</div>
+                                        <p style="font-size: 15.5px; line-height: 1.55; color: var(--slate-700);">每次回归都让大模型看图操作浏览器，单条用例耗时数十秒且每次路径不同，无法作为高并发 PR 准入门禁。</p>
+                                    </div>
+                                    <div class="card-light-subtle">
+                                        <div style="font-size: 19px; font-weight: 800; color: var(--purple); margin-bottom: 6px;">03 · 视觉像素对比“狼来了”误报泛滥</div>
+                                        <p style="font-size: 15.5px; line-height: 1.55; color: var(--slate-700);">5 秒轮播图、CSS 动画、懒加载图片以及 macOS 与 Linux 字体抗锯齿微差，导致像素级对比频繁误报。</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="card-dark" style="display: flex; flex-direction: column; justify-content: space-between;">
+                                <div>
+                                    <span class="pill-badge pill-cyan" style="margin-bottom: 14px;">OUR SOLUTION · 三阶段正交混合范式</span>
+                                    <h3 style="font-size: 26px; font-weight: 800; margin-bottom: 22px; color: var(--white);">探索用 AI 负责“广度”，回归用代码负责“速度”，视觉请 VLM 负责“降噪”</h3>
+                                </div>
+                                <div style="display: grid; gap: 18px; flex: 1;">
+                                    <div class="card-dark-alt">
+                                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                                            <span style="font-size: 20px; font-weight: 800; color: var(--cyan);">Phase A · 发现与生成期：多通道 AI 探索（重感知）</span>
+                                            <span class="pill-badge pill-cyan">4 Channels</span>
+                                        </div>
+                                        <p style="font-size: 15.5px; line-height: 1.55; color: var(--slate-300);">由 <code style="color: var(--cyan);">ui-test-discovery</code> 按需调度 AST、Browser Use、playwright-cli 与 Computer Use，穿透扫码登录与系统弹窗，沉淀结构化发现契约与三层定位策略。</p>
+                                    </div>
+                                    <div class="card-dark-alt">
+                                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                                            <span style="font-size: 20px; font-weight: 800; color: var(--mint);">Phase B · 高频回归期：Playwright 纯代码守门（重速度）</span>
+                                            <span class="pill-badge pill-mint">0 Token · ms 级</span>
+                                        </div>
+                                        <p style="font-size: 15.5px; line-height: 1.55; color: var(--slate-300);">将探索成果 100% 固化为 Git 纳管的 TypeScript 测试规格（9 CT + 21 E2E + 24 Visual），每次 PR 触发毫秒级确定性执行，支持 Azure 云端 10 Workers 并发。</p>
+                                    </div>
+                                    <div class="card-dark-alt">
+                                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                                            <span style="font-size: 20px; font-weight: 800; color: #A78BFA;">Phase C · 视觉裁决期：像素 + GPT-4o VLM 双层漏斗（重精准）</span>
+                                            <span class="pill-badge pill-purple">Smart Noise Filter</span>
+                                        </div>
+                                        <p style="font-size: 15.5px; line-height: 1.55; color: var(--slate-300);">95% 常规回归走免费原生像素比对；仅当像素比对失败且开启 <code style="color: #A78BFA;">VLM_REVIEW=true</code> 时，调用 GPT-4o Vision 区分抗锯齿噪点与真实 UI 崩坏。</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="slide-footer">
+                        <span>TravelVista · Agentic UI Testing Architecture</span>
+                        <span>03 / 13</span>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ===========================================
+                 SLIDE 04 — ENGINE COMPARISON: PLAYWRIGHT VS BROWSER USE VS COMPUTER USE (DARK)
+                 =========================================== -->
+            <section class="slide slide-dark" data-title="三大核心引擎对比：Playwright · Browser Use · Computer Use">
+                <div class="top-accent-strip"></div>
+                <div class="slide-inner">
+                    <div class="slide-header reveal">
+                        <div class="section-kicker">02B / CORE ENGINE COMPARISON</div>
+                        <h2 class="slide-title">三大核心引擎对比：Playwright · Browser Use · Computer Use</h2>
+                        <p class="slide-subtitle">厘清“网页确定性代码引擎”、“AI 实时浏览器协作引擎”与“AI 操作系统桌面引擎”的能力边界与黄金分工</p>
+                    </div>
+
+                    <div class="slide-body">
+                        <div class="grid-3 reveal reveal-d1" style="height: 440px;">
+                            <div class="card-dark" style="display: flex; flex-direction: column; justify-content: space-between;">
+                                <div>
+                                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                                        <span class="pill-badge pill-mint">ENGINE 01 · 确定性回归守门员</span>
+                                    </div>
+                                    <h3 style="font-size: 28px; font-weight: 800; color: var(--white); margin-bottom: 12px;">Playwright</h3>
+                                    <div class="card-dark-alt" style="padding: 10px 14px; font-size: 15px; font-weight: 700; color: var(--mint); margin-bottom: 14px;">
+                                        控制边界：浏览器网页内部（DOM 树 / 无障碍树 / 网络层）
+                                    </div>
+                                    <p style="font-size: 15.5px; line-height: 1.55; color: var(--slate-300); margin-bottom: 12px;">
+                                        <strong>底层原理：</strong>通过浏览器内核协议（CDP）直接运行编译好的 <code style="color: var(--mint);">.spec.ts</code> 测试代码，内置 Auto-Wait 自动等待。
+                                    </p>
+                                    <p style="font-size: 15.5px; line-height: 1.55; color: var(--white); margin-bottom: 12px;">
+                                        <strong style="color: var(--mint);">✓ 核心优势：</strong>毫秒级极速执行、<strong>0 Token 消耗</strong>、结果 100% 确定可复现，天然支持云端无头（Headless CI）高并发。
+                                    </p>
+                                </div>
+                                <div style="font-size: 14.5px; color: var(--amber); line-height: 1.45;">
+                                    ! 能力边界：无法操作浏览器外的系统原生文件框；遇到首次扫码/滑块登录需提前准备凭证。
+                                </div>
+                            </div>
+
+                            <div class="card-dark" style="display: flex; flex-direction: column; justify-content: space-between;">
+                                <div>
+                                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                                        <span class="pill-badge pill-cyan">ENGINE 02 · 实时网页侦察兵</span>
+                                    </div>
+                                    <h3 style="font-size: 28px; font-weight: 800; color: var(--white); margin-bottom: 12px;">Browser Use (MCP)</h3>
+                                    <div class="card-dark-alt" style="padding: 10px 14px; font-size: 15px; font-weight: 700; color: var(--cyan); margin-bottom: 14px;">
+                                        控制边界：开发者已打开的 Chrome / Edge 真实标签页
+                                    </div>
+                                    <p style="font-size: 15.5px; line-height: 1.55; color: var(--slate-300); margin-bottom: 12px;">
+                                        <strong>底层原理：</strong>AI 直接接管真人正在使用的浏览器标签页，支持“真人扫码登录 → AI 无缝接手探查”的人机交接。
+                                    </p>
+                                    <p style="font-size: 15.5px; line-height: 1.55; color: var(--white); margin-bottom: 12px;">
+                                        <strong style="color: var(--cyan);">✓ 核心优势：</strong>免密穿透企业微信 / SSO / MFA 登录墙；可随时注入 JS 探针采集动态渲染后的 DOM 与存储状态。
+                                    </p>
+                                </div>
+                                <div style="font-size: 14.5px; color: var(--amber); line-height: 1.45;">
+                                    ! 能力边界：仍受限于网页沙盒内部（看不见操作系统弹窗）；单步需 AI 参与，不适合跑海量日常回归。
+                                </div>
+                            </div>
+
+                            <div class="card-dark" style="display: flex; flex-direction: column; justify-content: space-between;">
+                                <div>
+                                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                                        <span class="pill-badge pill-coral">ENGINE 03 · 跨界破局特种兵</span>
+                                    </div>
+                                    <h3 style="font-size: 28px; font-weight: 800; color: var(--white); margin-bottom: 12px;">Computer Use (MCP)</h3>
+                                    <div class="card-dark-alt" style="padding: 10px 14px; font-size: 15px; font-weight: 700; color: var(--coral); margin-bottom: 14px;">
+                                        控制边界：整个电脑操作系统桌面与原生窗口
+                                    </div>
+                                    <p style="font-size: 15.5px; line-height: 1.55; color: var(--slate-300); margin-bottom: 12px;">
+                                        <strong>底层原理：</strong>跳出浏览器限制，站在 macOS / Windows 操作系统桌面视角，模拟真人鼠标键盘操控任意系统窗口。
+                                    </p>
+                                    <p style="font-size: 15.5px; line-height: 1.55; color: var(--white); margin-bottom: 12px;">
+                                        <strong style="color: var(--coral);">✓ 核心优势：</strong>唯一能操作 <code style="color: var(--coral);">&lt;input type=file&gt;</code> 系统原生文件夹窗口、OS 权限框、系统打印框及桌面应用的引擎。
+                                    </p>
+                                </div>
+                                <div style="font-size: 14.5px; color: var(--amber); line-height: 1.45;">
+                                    ! 能力边界：强依赖图形桌面环境且耗时较长，探明路径后需翻译为 Playwright 标准接口才能上云端 CI。
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="card-dark-alt reveal reveal-d2" style="padding: 18px 24px;">
+                            <div style="font-family: var(--font-display); font-size: 17px; font-weight: 800; color: var(--cyan); margin-bottom: 10px;">
+                                四大核心维度横向速查表（为什么三者缺一不可？）
+                            </div>
+                            <table class="data-table">
+                                <thead>
+                                    <tr>
+                                        <th style="width: 220px;">对比维度</th>
+                                        <th style="color: var(--mint);">Playwright（确定性代码引擎）</th>
+                                        <th style="color: var(--cyan);">Browser Use（AI 实时浏览器）</th>
+                                        <th style="color: var(--coral);">Computer Use（AI 桌面引擎）</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td style="font-weight: 700; color: var(--cyan);">操控视野</td>
+                                        <td>网页内部（DOM 树 / 无障碍树 / 网络）</td>
+                                        <td>真实 Chrome/Edge 标签页（含已登录态）</td>
+                                        <td>整个电脑桌面屏幕与操作系统原生窗口</td>
+                                    </tr>
+                                    <tr>
+                                        <td style="font-weight: 700; color: var(--cyan);">登录与系统弹窗</td>
+                                        <td>依赖已导出的登录凭证 / 无法点系统弹窗</td>
+                                        <td>支持真人扫码/MFA 交接 / 无法点系统弹窗</td>
+                                        <td>通吃 macOS/Win 原生文件选择框与权限框</td>
+                                    </tr>
+                                    <tr>
+                                        <td style="font-weight: 700; color: var(--cyan);">在本方案中的分工</td>
+                                        <td><strong>【回归期主力】</strong>毫秒级、0 Token 跑 CI 门禁</td>
+                                        <td><strong>【探索期前锋】</strong>免密进场、动态采集页面结构</td>
+                                        <td><strong>【探索期特种兵】</strong>跨越浏览器边界打通死角</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div class="slide-footer">
+                        <span>TravelVista · Agentic UI Testing Architecture</span>
+                        <span>04 / 13</span>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ===========================================
+                 SLIDE 05 — OVERALL ARCHITECTURE: 7 AGENTS × 9 SKILLS (DARK)
+                 =========================================== -->
+            <section class="slide slide-dark" data-title="总体架构：7 个专业 Agent × 9 个可复用 Skill 分层矩阵">
+                <div class="top-accent-strip"></div>
+                <div class="slide-inner">
+                    <div class="slide-header reveal">
+                        <div class="section-kicker">03 / ARCHITECTURE MATRIX</div>
+                        <h2 class="slide-title">总体架构：7 个专业 Agent × 9 个可复用 Skill 分层矩阵</h2>
+                        <p class="slide-subtitle">Agent 专注流程编排、职责门控与报告归口；Skill 封装标准化测试模板、运行命令与领域工程知识</p>
+                    </div>
+
+                    <div class="slide-body">
+                        <div style="display: grid; grid-template-columns: 820px 896px; gap: 28px; height: 630px;" class="reveal reveal-d1">
+                            <div class="card-dark" style="display: flex; flex-direction: column; justify-content: space-between;">
+                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                                    <span style="font-size: 21px; font-weight: 800; color: var(--cyan);">左侧 · 7 个专业 Agent 四层职责体系 (.github/agents/)</span>
+                                    <span class="pill-badge pill-cyan">Orchestration</span>
+                                </div>
+                                <div style="display: grid; gap: 14px; flex: 1;">
+                                    <div class="card-dark-alt">
+                                        <div style="font-family: var(--font-mono); font-size: 13px; color: var(--cyan); font-weight: 700; margin-bottom: 4px;">LAYER 01 · 入口路由与独立代码审查层</div>
+                                        <div style="font-size: 16px; font-weight: 700; margin-bottom: 4px;"><code>ui-test</code>（总控路由） + <code>code-review</code>（独立审查）</div>
+                                        <div style="font-size: 14.5px; color: var(--slate-300);">识别 CT / E2E / Visual / Governance 意图保持默认路径轻量；6 维度只读代码审计输出独立报告。</div>
+                                    </div>
+                                    <div class="card-dark-alt">
+                                        <div style="font-family: var(--font-mono); font-size: 13px; color: var(--mint); font-weight: 700; margin-bottom: 4px;">LAYER 02 · 前置发现与契约层</div>
+                                        <div style="font-size: 16px; font-weight: 700; margin-bottom: 4px;"><code>ui-test-discovery</code>（共享发现与定位探查）</div>
+                                        <div style="font-size: 14.5px; color: var(--slate-300);">执行四通道探测，校验 Git Commit 新鲜度缓存，输出 <code>DEEP_DISCOVERY_REPORT.md</code> 与定位策略契约。</div>
+                                    </div>
+                                    <div class="card-dark-alt">
+                                        <div style="font-family: var(--font-mono); font-size: 13px; color: var(--amber); font-weight: 700; margin-bottom: 4px;">LAYER 03 · 三大测试金字塔执行层</div>
+                                        <div style="font-size: 16px; font-weight: 700; margin-bottom: 4px;"><code>ui-test-component</code> · <code>ui-test-e2e</code> · <code>ui-test-visual</code></div>
+                                        <div style="font-size: 14.5px; color: var(--slate-300);">分别负责组件隔离挂载（9 Specs）、跨页面核心旅程（21 Cases）与双端双语视觉快照（24 PNGs）。</div>
+                                    </div>
+                                    <div class="card-dark-alt">
+                                        <div style="font-family: var(--font-mono); font-size: 13px; color: var(--coral); font-weight: 700; margin-bottom: 4px;">LAYER 04 · 云端并发与视觉门禁治理层</div>
+                                        <div style="font-size: 16px; font-weight: 700; margin-bottom: 4px;"><code>ui-test-governance</code>（云端与门禁治理）</div>
+                                        <div style="font-size: 14.5px; color: var(--slate-300);">统管 Azure Playwright 10 并发云端执行、跨 OS 快照权威策略、CI 工作流与 GPT-4o VLM 语义复核。</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="card-dark" style="display: flex; flex-direction: column; justify-content: space-between;">
+                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                                    <span style="font-size: 21px; font-weight: 800; color: var(--mint);">右侧 · 9 个可复用 Skill 能力底座 (.github/skills/)</span>
+                                    <span class="pill-badge pill-mint">Execution Skills</span>
+                                </div>
+                                <div class="grid-3" style="gap: 14px; flex: 1;">
+                                    <div class="card-dark-alt">
+                                        <div style="font-family: var(--font-mono); font-size: 14px; font-weight: 700; color: var(--amber); margin-bottom: 6px;">playwright-config</div>
+                                        <div style="font-size: 13.5px; color: var(--slate-300); line-height: 1.45;"><strong>唯一配置权威：</strong>统管 3 套 Config、共享夹具与 package.json 脚本。</div>
+                                    </div>
+                                    <div class="card-dark-alt">
+                                        <div style="font-family: var(--font-mono); font-size: 14px; font-weight: 700; color: var(--cyan); margin-bottom: 6px;">playwright-explore</div>
+                                        <div style="font-size: 13.5px; color: var(--slate-300); line-height: 1.45;"><strong>站点深层探索：</strong>爬取路由、表单控件与交互，生成探索报告与草稿。</div>
+                                    </div>
+                                    <div class="card-dark-alt">
+                                        <div style="font-family: var(--font-mono); font-size: 14px; font-weight: 700; color: var(--cyan); margin-bottom: 6px;">playwright-cli</div>
+                                        <div style="font-size: 13.5px; color: var(--slate-300); line-height: 1.45;"><strong>命令行沙盒：</strong>抓取 YAML 无障碍语义树快照，自动录制 TS 代码。</div>
+                                    </div>
+                                    <div class="card-dark-alt">
+                                        <div style="font-family: var(--font-mono); font-size: 14px; font-weight: 700; color: var(--mint); margin-bottom: 6px;">playwright-ct</div>
+                                        <div style="font-size: 13.5px; color: var(--slate-300); line-height: 1.45;"><strong>组件隔离测试：</strong>封装 Provider 挂载、Props 契约、事件与键盘无障碍。</div>
+                                    </div>
+                                    <div class="card-dark-alt">
+                                        <div style="font-family: var(--font-mono); font-size: 14px; font-weight: 700; color: var(--mint); margin-bottom: 6px;">playwright-e2e</div>
+                                        <div style="font-size: 13.5px; color: var(--slate-300); line-height: 1.45;"><strong>端到端旅程：</strong>封装跨页面导航、搜索筛选、表单校验与存储隔离。</div>
+                                    </div>
+                                    <div class="card-dark-alt">
+                                        <div style="font-family: var(--font-mono); font-size: 14px; font-weight: 700; color: #A78BFA; margin-bottom: 6px;">playwright-visual</div>
+                                        <div style="font-size: 13.5px; color: var(--slate-300); line-height: 1.45;"><strong>视觉快照对比：</strong>封装五步页面去抖、响应式双视口与双语截图矩阵。</div>
+                                    </div>
+                                    <div class="card-dark-alt">
+                                        <div style="font-family: var(--font-mono); font-size: 14px; font-weight: 700; color: #A78BFA; margin-bottom: 6px;">playwright-vlm</div>
+                                        <div style="font-size: 13.5px; color: var(--slate-300); line-height: 1.45;"><strong>GPT-4o 语义复核：</strong>提供零依赖 VLM 复核器，输出三图并排对比报告。</div>
+                                    </div>
+                                    <div class="card-dark-alt">
+                                        <div style="font-family: var(--font-mono); font-size: 14px; font-weight: 700; color: var(--coral); margin-bottom: 6px;">playwright-azure</div>
+                                        <div style="font-size: 13.5px; color: var(--slate-300); line-height: 1.45;"><strong>云端工作区：</strong>封装 Azure Entra ID 认证、exposeNetwork 与 10 并发。</div>
+                                    </div>
+                                    <div class="card-dark-alt">
+                                        <div style="font-family: var(--font-mono); font-size: 14px; font-weight: 700; color: var(--coral); margin-bottom: 6px;">code-review</div>
+                                        <div style="font-size: 13.5px; color: var(--slate-300); line-height: 1.45;"><strong>6 维代码审计：</strong>安全、性能、无障碍、质量、可维护性与风格检查单。</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="card-dark-alt reveal reveal-d2" style="padding: 16px 26px; display: flex; justify-content: space-between; align-items: center;">
+                            <span style="font-size: 16.5px; font-weight: 700; color: var(--amber);">★ 架构铁律：唯一配置所有权（Sole Config Ownership）与只读报告原则（Report-Only）</span>
+                            <span style="font-size: 15px; color: var(--slate-300);">仅 <code>playwright-config</code> 可修改配置文件与共享夹具；所有测试 Agent 严禁篡改 <code>src/</code> 业务代码。</span>
+                        </div>
+                    </div>
+
+                    <div class="slide-footer">
+                        <span>TravelVista · Agentic UI Testing Architecture</span>
+                        <span>05 / 13</span>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ===========================================
+                 SLIDE 06 — 4 EXPLORATION CHANNELS (LIGHT)
+                 =========================================== -->
+            <section class="slide slide-light" data-title="四通道智能站点探索机制">
+                <div class="top-accent-strip"></div>
+                <div class="slide-inner">
+                    <div class="slide-header reveal">
+                        <div class="section-kicker">04 / MULTI-CHANNEL INTELLIGENT EXPLORATION</div>
+                        <h2 class="slide-title">四通道智能站点探索机制：Static AST / Browser Use / playwright-cli / Computer Use</h2>
+                        <p class="slide-subtitle">由 ui-test-discovery 按需渐进调度四条互补通道，既能毫秒级白盒扫描源码，也能跨出浏览器操控系统级原生窗口</p>
+                    </div>
+
+                    <div class="slide-body">
+                        <div class="grid-4 reveal reveal-d1" style="height: 575px;">
+                            <div class="card-light" style="display: flex; flex-direction: column; justify-content: space-between;">
+                                <div>
+                                    <span class="pill-badge pill-mint" style="margin-bottom: 12px;">CHANNEL 01 · 默认首选</span>
+                                    <h3 style="font-size: 22px; font-weight: 800; margin-bottom: 6px;">Static AST 源码分析</h3>
+                                    <div style="font-size: 14px; font-weight: 700; color: var(--mint); margin-bottom: 14px;">零运行时开销 · 秒级全景扫描</div>
+                                    <p style="font-size: 15px; line-height: 1.55; color: var(--slate-700); margin-bottom: 12px;">
+                                        <strong>触发时机：</strong>存在本地前端源码（<code>src/</code>）时默认第一步执行。
+                                    </p>
+                                    <p style="font-size: 15px; line-height: 1.55; color: var(--slate-700); margin-bottom: 12px;">
+                                        <strong>探查内容：</strong>解析 <code>App.tsx</code> 8 条路由、9 个组件 Props 接口、<code>locales/zh.json</code> &amp; <code>en.json</code> 双语词条及 <code>localStorage</code> 键名。
+                                    </p>
+                                </div>
+                                <div class="card-light-subtle" style="font-size: 14px; color: var(--slate-700);">
+                                    <strong>局限接力：</strong>看不见运行时真实渲染位置与登录拦截 ──► 移交通道 02/03。
+                                </div>
+                            </div>
+
+                            <div class="card-light" style="display: flex; flex-direction: column; justify-content: space-between;">
+                                <div>
+                                    <span class="pill-badge pill-teal" style="margin-bottom: 12px;">CHANNEL 02 · 人机协同</span>
+                                    <h3 style="font-size: 22px; font-weight: 800; margin-bottom: 6px;">Browser Use (MCP)</h3>
+                                    <div style="font-size: 14px; font-weight: 700; color: var(--teal); margin-bottom: 14px;">复用真人登录态 · 实时 DOM 探针</div>
+                                    <p style="font-size: 15px; line-height: 1.55; color: var(--slate-700); margin-bottom: 12px;">
+                                        <strong>触发时机：</strong>遇到 SSO / 企业微信扫码 / MFA 验证码，或复杂的 Portal / Shadow DOM 动态组件。
+                                    </p>
+                                    <p style="font-size: 15px; line-height: 1.55; color: var(--slate-700); margin-bottom: 12px;">
+                                        <strong>探查内容：</strong>通过 <code>manage_user_tab</code> 接管已登录标签页导出 <code>storageState</code>，并用 <code>run_javascript</code> 检测同名按钮冲突。
+                                    </p>
+                                </div>
+                                <div class="card-light-subtle" style="font-size: 14px; color: var(--slate-700);">
+                                    <strong>局限接力：</strong>受限于浏览器内部，无法点击系统原生弹窗 ──► 移交通道 03/04。
+                                </div>
+                            </div>
+
+                            <div class="card-light" style="display: flex; flex-direction: column; justify-content: space-between;">
+                                <div>
+                                    <span class="pill-badge pill-purple" style="margin-bottom: 12px;">CHANNEL 03 · 干净沙盒</span>
+                                    <h3 style="font-size: 22px; font-weight: 800; margin-bottom: 6px;">playwright-cli 引擎</h3>
+                                    <div style="font-size: 14px; font-weight: 700; color: var(--purple); margin-bottom: 14px;">无障碍语义树快照 · 自动录代码</div>
+                                    <p style="font-size: 15px; line-height: 1.55; color: var(--slate-700); margin-bottom: 12px;">
+                                        <strong>触发时机：</strong>仅提供线上/测试环境 URL 的黑盒探索，或需在独立沙盒中录制标准交互轨迹。
+                                    </p>
+                                    <p style="font-size: 15px; line-height: 1.55; color: var(--slate-700); margin-bottom: 12px;">
+                                        <strong>探查内容：</strong>调用 <code>snapshot</code> 导出 YAML 无障碍语义树（含元素 <code>ref</code>），边执行 <code>fill/click</code> 边自动映射为 Playwright 代码草稿。
+                                    </p>
+                                </div>
+                                <div class="card-light-subtle" style="font-size: 14px; color: var(--slate-700);">
+                                    <strong>局限接力：</strong>遇到跳出 DOM 的 OS 原生文件框会卡住 ──► 升级通道 04。
+                                </div>
+                            </div>
+
+                            <div class="card-light" style="display: flex; flex-direction: column; justify-content: space-between;">
+                                <div>
+                                    <span class="pill-badge pill-coral" style="margin-bottom: 12px;">CHANNEL 04 · 跨界破局</span>
+                                    <h3 style="font-size: 22px; font-weight: 800; margin-bottom: 6px;">Computer Use (MCP)</h3>
+                                    <div style="font-size: 14px; font-weight: 700; color: var(--coral); margin-bottom: 14px;">OS 桌面级 CUA · 突破浏览器围墙</div>
+                                    <p style="font-size: 15px; line-height: 1.55; color: var(--slate-700); margin-bottom: 12px;">
+                                        <strong>触发时机：</strong>网页操作触发了浏览器 DOM 之外的操作系统原生窗口或桌面端协同场景。
+                                    </p>
+                                    <p style="font-size: 15px; line-height: 1.55; color: var(--slate-700); margin-bottom: 12px;">
+                                        <strong>探查内容：</strong>通过桌面级 <code>exec_js</code> 操控 macOS Finder / Windows 原生文件选择框、OS 级摄像头/定位权限弹窗及系统打印对话框。
+                                    </p>
+                                </div>
+                                <div class="card-light-subtle" style="font-size: 14px; color: var(--coral); font-weight: 700;">
+                                    <strong>核心使命：</strong>帮团队走完探索闭环，随后收敛映射为无头 Playwright API！
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="card-dark reveal reveal-d2" style="padding: 18px 28px; display: flex; justify-content: space-between; align-items: center;">
+                            <div>
+                                <div style="font-size: 17px; font-weight: 800; color: var(--cyan); margin-bottom: 4px;">
+                                    ★ 确定性收敛原则（Deterministic Convergence Rule）：探索期多模态破局，回归期纯代码收敛
+                                </div>
+                                <div style="font-size: 14.5px; color: var(--slate-300);">
+                                    Browser Use 扫码登录 ──► 固化为 <code>storageState</code>；Computer Use 原生选文件/点权限 ──► 固化为 <code>locator.setInputFiles()</code> 与 <code>context.grantPermissions()</code>，确保 Linux 无头 CI 100% 独立运行。
+                                </div>
+                            </div>
+                            <span class="pill-badge pill-mint" style="flex-shrink: 0;">Headless CI Ready</span>
+                        </div>
+                    </div>
+
+                    <div class="slide-footer">
+                        <span>TravelVista · Agentic UI Testing Architecture</span>
+                        <span>06 / 13</span>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ===========================================
+                 SLIDE 07 — 4-CHANNEL COLLABORATION CASE STUDY (DARK)
+                 =========================================== -->
+            <section class="slide slide-dark" data-title="四通道协同实战案例：扫码登录 + 上传护照办签证">
+                <div class="top-accent-strip"></div>
+                <div class="slide-inner">
+                    <div class="slide-header reveal">
+                        <div class="section-kicker">04B / MULTI-CHANNEL COLLABORATION CASE STUDY</div>
+                        <h2 class="slide-title">四通道协同实战案例：“扫码登录 + 上传护照办签证”接力全流程</h2>
+                        <p class="slide-subtitle">面对“企业微信扫码拦截 + 页面同名按钮冲突 + macOS 原生文件选择弹窗”，看四条通道如何像特种部队一样接力破局</p>
+                    </div>
+
+                    <div class="slide-body">
+                        <div class="grid-4 reveal reveal-d1" style="height: 495px;">
+                            <div class="card-dark" style="display: flex; flex-direction: column; justify-content: space-between;">
+                                <div>
+                                    <span class="pill-badge pill-mint" style="margin-bottom: 12px;">第一棒 · 看图纸摸家底</span>
+                                    <h3 style="font-size: 22px; font-weight: 800; margin-bottom: 12px;">01 · Static AST 源码扫描</h3>
+                                    <p style="font-size: 15px; line-height: 1.55; color: var(--slate-300); margin-bottom: 12px;">
+                                        <strong>执行动作：</strong>2 秒扫描 <code>src/</code>，查明签证页路由为 <code>/visa-apply</code>，包含姓名、护照号输入框及隐藏的 <code>accept=".jpg,.png"</code> 文件控件。
+                                    </p>
+                                    <p style="font-size: 15px; line-height: 1.55; color: var(--amber);">
+                                        <strong>! 遇到卡点：</strong>发现路由被 <code>&lt;SSOAuthGuard&gt;</code> 包裹，必须企业微信扫码登录才能进入，静态看代码无法拿到真实登录态。
+                                    </p>
+                                </div>
+                                <div class="card-dark-alt" style="padding: 10px 14px; text-align: center; font-weight: 700; color: var(--mint); font-size: 14.5px;">
+                                    交接棒 ──► 呼叫通道 02 破除扫码墙
+                                </div>
+                            </div>
+
+                            <div class="card-dark" style="display: flex; flex-direction: column; justify-content: space-between;">
+                                <div>
+                                    <span class="pill-badge pill-cyan" style="margin-bottom: 12px;">第二棒 · 借真人门票进场</span>
+                                    <h3 style="font-size: 22px; font-weight: 800; margin-bottom: 12px;">02 · Browser Use 实时接管</h3>
+                                    <p style="font-size: 15px; line-height: 1.55; color: var(--slate-300); margin-bottom: 12px;">
+                                        <strong>执行动作：</strong>开发者在 Chrome 扫一次码后，<code>manage_user_tab</code> 瞬间接管该标签页，将 Cookie 与 Token 导出为 <code>auth.json</code> 通行证。
+                                    </p>
+                                    <p style="font-size: 15px; line-height: 1.55; color: var(--cyan);">
+                                        <strong>✓ 关键发现：</strong>注入 JS 探针发现顶栏与表单底部各有一个叫“提交申请”的按钮，提前标记需用 <code>getByRole('main')</code> 消歧。
+                                    </p>
+                                </div>
+                                <div class="card-dark-alt" style="padding: 10px 14px; text-align: center; font-weight: 700; color: var(--cyan); font-size: 14.5px;">
+                                    交接棒 ──► 携通行证移交通道 03
+                                </div>
+                            </div>
+
+                            <div class="card-dark" style="display: flex; flex-direction: column; justify-content: space-between;">
+                                <div>
+                                    <span class="pill-badge pill-purple" style="margin-bottom: 12px;">第三棒 · 干净沙盒录树</span>
+                                    <h3 style="font-size: 22px; font-weight: 800; margin-bottom: 12px;">03 · playwright-cli 录制</h3>
+                                    <p style="font-size: 15px; line-height: 1.55; color: var(--slate-300); margin-bottom: 12px;">
+                                        <strong>执行动作：</strong>加载 <code>auth.json</code> 免密直达 <code>/visa-apply</code>，拍下 YAML 无障碍语义树快照，试填“张三 / E12345678”验证校验规则。
+                                    </p>
+                                    <p style="font-size: 15px; line-height: 1.55; color: var(--amber);">
+                                        <strong>! 遇到卡点：</strong>点击“上传护照首页”按钮后，弹出了苹果 <strong>macOS Finder 原生系统文件选择框</strong>，跳出了网页 DOM 边界！
+                                    </p>
+                                </div>
+                                <div class="card-dark-alt" style="padding: 10px 14px; text-align: center; font-weight: 700; color: #A78BFA; font-size: 14.5px;">
+                                    交接棒 ──► 升级通道 04 跨界点击
+                                </div>
+                            </div>
+
+                            <div class="card-dark" style="display: flex; flex-direction: column; justify-content: space-between;">
+                                <div>
+                                    <span class="pill-badge pill-coral" style="margin-bottom: 12px;">第四棒 · 桌面视角破局</span>
+                                    <h3 style="font-size: 22px; font-weight: 800; margin-bottom: 12px;">04 · Computer Use 控桌面</h3>
+                                    <p style="font-size: 15px; line-height: 1.55; color: var(--slate-300); margin-bottom: 12px;">
+                                        <strong>执行动作：</strong>启动桌面级 <code>cua</code> 引擎看到整个电脑屏幕，在 macOS 原生文件窗口中选中 <code>passport-sample.jpg</code> 并点击“打开”。
+                                    </p>
+                                    <p style="font-size: 15px; line-height: 1.55; color: var(--mint);">
+                                        <strong>✓ 闭环验证：</strong>文件成功回填网页，探明网页随后出现 <code>role="status"</code>（“护照 OCR 识别成功”），点击主区域“提交申请”走完闭环！
+                                    </p>
+                                </div>
+                                <div class="card-dark-alt" style="padding: 10px 14px; text-align: center; font-weight: 700; color: var(--coral); font-size: 14.5px;">
+                                    探索通关 ──► 收敛生成纯代码剧本
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="card-dark-alt reveal reveal-d2" style="padding: 20px 26px;">
+                            <div style="font-size: 17px; font-weight: 800; color: var(--mint); margin-bottom: 12px;">
+                                ★ 最终收敛产物：生成的 <code style="color: var(--cyan);">tests/e2e/visa-apply.spec.ts</code>（在无屏幕 Linux 云端 CI 零人工、毫秒级全自动运行）
+                            </div>
+                            <div class="grid-3">
+                                <div>
+                                    <div style="font-size: 14px; font-weight: 700; color: var(--cyan); margin-bottom: 6px;">① 扫码墙收敛为免密凭证注入</div>
+                                    <code class="code-chip">test.use({ storageState: 'auth.json' });</code>
+                                </div>
+                                <div>
+                                    <div style="font-size: 14px; font-weight: 700; color: var(--mint); margin-bottom: 6px;">② 同名按钮收敛为地标区域消歧</div>
+                                    <code class="code-chip">page.getByRole('main').getByRole('button', { name: '提交申请' })</code>
+                                </div>
+                                <div>
+                                    <div style="font-size: 14px; font-weight: 700; color: var(--amber); margin-bottom: 6px;">③ 原生文件框收敛为底层文件直塞</div>
+                                    <code class="code-chip">await page.locator('input[type="file"]').setInputFiles('passport.jpg')</code>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="slide-footer">
+                        <span>TravelVista · Agentic UI Testing Architecture</span>
+                        <span>07 / 13</span>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ===========================================
+                 SLIDE 08 — 6-GATE QUALITY PIPELINE (LIGHT)
+                 =========================================== -->
+            <section class="slide slide-light" data-title="端到端六步质量门控工作流 (6-Gate Pipeline)">
+                <div class="top-accent-strip"></div>
+                <div class="slide-inner">
+                    <div class="slide-header reveal">
+                        <div class="section-kicker">05 / SIX-GATE QUALITY PIPELINE</div>
+                        <h2 class="slide-title">端到端六步质量门控工作流（6-Gate Pipeline）</h2>
+                        <p class="slide-subtitle">从用户自然语言意图到结构化报告落盘，6 道刚性门控确保多 Agent 协作不串线、不漏检、不污染业务代码</p>
+                    </div>
+
+                    <div class="slide-body">
+                        <div class="grid-3 reveal reveal-d1" style="height: 735px;">
+                            <div class="card-light" style="display: flex; flex-direction: column; justify-content: space-between;">
+                                <div>
+                                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                                        <span style="font-family: var(--font-display); font-size: 24px; font-weight: 800; color: var(--teal);">GATE 01</span>
+                                        <span class="pill-badge pill-teal">Owner: ui-test</span>
+                                    </div>
+                                    <h3 style="font-size: 22px; font-weight: 800; margin-bottom: 10px;">意图分流门控（Routing Gate）</h3>
+                                    <p style="font-size: 15.5px; line-height: 1.6; color: var(--slate-700);">
+                                        识别用户请求属于组件测试（CT）、端到端测试（E2E）、视觉回归（Visual）还是云端门禁治理（Governance）。默认路径保持轻量直达，未请求云端或 VLM 时绝不强行加载重型依赖。
+                                    </p>
+                                </div>
+                                <div class="card-light-subtle" style="font-family: var(--font-mono); font-size: 13px; color: var(--slate-700);">
+                                    产出：精准子 Agent 调度指令与上下文边界
+                                </div>
+                            </div>
+
+                            <div class="card-light" style="display: flex; flex-direction: column; justify-content: space-between;">
+                                <div>
+                                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                                        <span style="font-family: var(--font-display); font-size: 24px; font-weight: 800; color: var(--blue);">GATE 02</span>
+                                        <span class="pill-badge pill-teal">Owner: ui-test-discovery</span>
+                                    </div>
+                                    <h3 style="font-size: 22px; font-weight: 800; margin-bottom: 10px;">缓存新鲜度门控（Freshness Gate）</h3>
+                                    <p style="font-size: 15.5px; line-height: 1.6; color: var(--slate-700);">
+                                        检查 <code>docs/DEEP_DISCOVERY_REPORT.md</code> 顶部内嵌的 <code>&lt;!-- git-commit: abc1234 --&gt;</code> 指纹。只要自上次探索以来 <code>src/</code> 目录无文件变更，直接秒级复用缓存报告，避免重复扫盘。
+                                    </p>
+                                </div>
+                                <div class="card-light-subtle" style="font-family: var(--font-mono); font-size: 13px; color: var(--slate-700);">
+                                    产出：DEEP_DISCOVERY_REPORT.md + LOCATOR_STRATEGY
+                                </div>
+                            </div>
+
+                            <div class="card-light" style="display: flex; flex-direction: column; justify-content: space-between;">
+                                <div>
+                                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                                        <span style="font-family: var(--font-display); font-size: 24px; font-weight: 800; color: var(--amber);">GATE 03</span>
+                                        <span class="pill-badge pill-amber">Owner: playwright-config</span>
+                                    </div>
+                                    <h3 style="font-size: 22px; font-weight: 800; margin-bottom: 10px;">唯一配置所有权门控（Config Gate）</h3>
+                                    <p style="font-size: 15.5px; line-height: 1.6; color: var(--slate-700);">
+                                        严格锁定 <code>playwright.config.ts</code>、<code>playwright-ct.config.ts</code>、<code>playwright.service.config.ts</code> 及 <code>tests/fixtures/</code> 的唯一修改权，彻底杜绝多个测试 Agent 互相覆盖端口、视口或超时配置。
+                                    </p>
+                                </div>
+                                <div class="card-light-subtle" style="font-family: var(--font-mono); font-size: 13px; color: var(--slate-700);">
+                                    产出：3 套标准化 Config + test-helpers.ts 共享夹具
+                                </div>
+                            </div>
+
+                            <div class="card-light" style="display: flex; flex-direction: column; justify-content: space-between;">
+                                <div>
+                                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                                        <span style="font-family: var(--font-display); font-size: 24px; font-weight: 800; color: var(--mint);">GATE 04</span>
+                                        <span class="pill-badge pill-mint">Owner: CT / E2E / Visual</span>
+                                    </div>
+                                    <h3 style="font-size: 22px; font-weight: 800; margin-bottom: 10px;">生成质量门控（Generation Gate）</h3>
+                                    <p style="font-size: 15.5px; line-height: 1.6; color: var(--slate-700);">
+                                        强制生成代码遵循三层定位优先级（首选 Landmark + <code>getByRole</code>，严禁脆弱 XPath 与 <code>waitForTimeout</code>），并在每个 <code>beforeEach</code> 中清空 <code>localStorage</code>、挂载 <code>pageerror</code> 异常监听器。
+                                    </p>
+                                </div>
+                                <div class="card-light-subtle" style="font-family: var(--font-mono); font-size: 13px; color: var(--slate-700);">
+                                    产出：9 CT Specs + 6 E2E Specs + 1 Visual Spec
+                                </div>
+                            </div>
+
+                            <div class="card-light" style="display: flex; flex-direction: column; justify-content: space-between;">
+                                <div>
+                                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                                        <span style="font-family: var(--font-display); font-size: 24px; font-weight: 800; color: var(--purple);">GATE 05</span>
+                                        <span class="pill-badge pill-purple">Owner: Runner + VLM</span>
+                                    </div>
+                                    <h3 style="font-size: 22px; font-weight: 800; margin-bottom: 10px;">执行与双层裁决门控（Execution Gate）</h3>
+                                    <p style="font-size: 15.5px; line-height: 1.6; color: var(--slate-700);">
+                                        本地或 Azure 云端执行测试套件；视觉对比失败时严禁自动运行 <code>--update-snapshots</code> 掩盖问题，按需触发 GPT-4o VLM 语义复核（置信度 ≥ 0.7 过滤渲染噪点）。
+                                    </p>
+                                </div>
+                                <div class="card-light-subtle" style="font-family: var(--font-mono); font-size: 13px; color: var(--slate-700);">
+                                    产出：playwright-report + vlm-report.json 裁决明细
+                                </div>
+                            </div>
+
+                            <div class="card-light" style="display: flex; flex-direction: column; justify-content: space-between;">
+                                <div>
+                                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                                        <span style="font-family: var(--font-display); font-size: 24px; font-weight: 800; color: var(--coral);">GATE 06</span>
+                                        <span class="pill-badge pill-coral">Owner: All Specialists</span>
+                                    </div>
+                                    <h3 style="font-size: 22px; font-weight: 800; margin-bottom: 10px;">分段只读报告门控（Report-Only Gate）</h3>
+                                    <p style="font-size: 15.5px; line-height: 1.6; color: var(--slate-700);">
+                                        严格执行 <code>Report-Only</code> 铁律：测试发现业务 Bug 只准记录复现步骤、根因与修复建议，绝不私自改动 <code>src/</code>。各 Agent 按专属章节写入 <code>docs/TEST_REPORT.md</code>，互不覆盖。
+                                    </p>
+                                </div>
+                                <div class="card-light-subtle" style="font-family: var(--font-mono); font-size: 13px; color: var(--slate-700);">
+                                    产出：docs/TEST_REPORT.md + CODE_REVIEW_REPORT.md
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="slide-footer">
+                        <span>TravelVista · Agentic UI Testing Architecture</span>
+                        <span>08 / 13</span>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ===========================================
+                 SLIDE 09 — TEST PYRAMID: CT + E2E (DARK)
+                 =========================================== -->
+            <section class="slide slide-dark" data-title="测试金字塔落地：组件隔离测试 (CT) 与端到端旅程 (E2E)">
+                <div class="top-accent-strip"></div>
+                <div class="slide-inner">
+                    <div class="slide-header reveal">
+                        <div class="section-kicker">06 / TEST PYRAMID IN ACTION (CT &amp; E2E)</div>
+                        <h2 class="slide-title">测试金字塔落地：组件隔离测试 (CT) 与端到端旅程 (E2E)</h2>
+                        <p class="slide-subtitle">告别“所有逻辑都塞进 E2E”的反模式：用 9 个组件测试拦截 80% 边界与无障碍问题，用 21 条 E2E 守护跨页面核心业务流</p>
+                    </div>
+
+                    <div class="slide-body">
+                        <div style="display: grid; grid-template-columns: 790px 926px; gap: 28px; height: 590px;" class="reveal reveal-d1">
+                            <div class="card-dark" style="display: flex; flex-direction: column; justify-content: space-between;">
+                                <div>
+                                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                                        <span class="pill-badge pill-mint">LAYER 1 · PLAYWRIGHT CT 组件隔离测试</span>
+                                        <span style="font-family: var(--font-mono); font-size: 15px; color: var(--mint); font-weight: 700;">9 Component Specs</span>
+                                    </div>
+                                    <h3 style="font-size: 24px; font-weight: 800; margin-bottom: 10px;">真实 Provider 包装挂载（MemoryRouter + i18next）</h3>
+                                    <p style="font-size: 15px; color: var(--slate-300); line-height: 1.55; margin-bottom: 16px;">
+                                        通过 <code>playwright/index.tsx</code> 的 <code>beforeMount</code> 钩子自动注入路由与国际化上下文，毫秒级验证四大契约维度：
+                                    </p>
+                                    <div class="grid-2" style="gap: 12px; margin-bottom: 16px;">
+                                        <div class="card-dark-alt" style="padding: 12px 16px;">
+                                            <div style="font-weight: 700; color: var(--mint); font-size: 15px;">① Props 契约与缺省状态</div>
+                                            <div style="font-size: 13.5px; color: var(--slate-300);">验证 badges、空列表、禁用态与高亮渲染</div>
+                                        </div>
+                                        <div class="card-dark-alt" style="padding: 12px 16px;">
+                                            <div style="font-weight: 700; color: var(--cyan); font-size: 15px;">② 事件回调与受控输入</div>
+                                            <div style="font-size: 13.5px; color: var(--slate-300);">验证 onSearch、onChange、收藏切换与表单提交</div>
+                                        </div>
+                                        <div class="card-dark-alt" style="padding: 12px 16px;">
+                                            <div style="font-weight: 700; color: #A78BFA; font-size: 15px;">③ 键盘导航与 ARIA 语义</div>
+                                            <div style="font-size: 13.5px; color: var(--slate-300);">验证 Tab 焦点流转、Enter/Space 激活与 role 属性</div>
+                                        </div>
+                                        <div class="card-dark-alt" style="padding: 12px 16px;">
+                                            <div style="font-weight: 700; color: var(--amber); font-size: 15px;">④ 双语词条即时响应</div>
+                                            <div style="font-size: 13.5px; color: var(--slate-300);">独立挂载下直接验证 zh / en 雙语文本切换</div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="card-dark-alt" style="padding: 12px 16px; font-family: var(--font-mono); font-size: 13px; color: var(--slate-300);">
+                                    覆盖组件：DestinationCard · HeroCarousel · SearchBar · CategoryFilter · Navbar · Footer · Modal · RatingStars · TestimonialCarousel
+                                </div>
+                            </div>
+
+                            <div class="card-dark" style="display: flex; flex-direction: column; justify-content: space-between;">
+                                <div>
+                                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                                        <span class="pill-badge pill-cyan">LAYER 2 · PLAYWRIGHT E2E 端到端旅程测试</span>
+                                        <span style="font-family: var(--font-mono); font-size: 15px; color: var(--cyan); font-weight: 700;">6 Specs · 21 Test Cases</span>
+                                    </div>
+                                    <h3 style="font-size: 24px; font-weight: 800; margin-bottom: 14px;">全站 8 条路由与跨页面状态流转闭环</h3>
+                                    <table class="data-table">
+                                        <thead>
+                                            <tr>
+                                                <th>测试规格文件</th>
+                                                <th>用例数</th>
+                                                <th>核心验证旅程与断言重点</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr>
+                                                <td style="font-family: var(--font-mono); color: var(--cyan);">home.spec.ts</td>
+                                                <td>4</td>
+                                                <td>Hero 轮播切换、统计数字栏、精选目的地卡片点击跳转详情</td>
+                                            </tr>
+                                            <tr>
+                                                <td style="font-family: var(--font-mono); color: var(--cyan);">destinations.spec.ts</td>
+                                                <td>5</td>
+                                                <td>关键词搜索、分类筛选、价格/评分排序、无结果空状态与重置</td>
+                                            </tr>
+                                            <tr>
+                                                <td style="font-family: var(--font-mono); color: var(--cyan);">detail-and-favorites.spec.ts</td>
+                                                <td>3</td>
+                                                <td>详情页渲染、收藏按钮状态持久化（localStorage）、收藏夹列表同步</td>
+                                            </tr>
+                                            <tr>
+                                                <td style="font-family: var(--font-mono); color: var(--cyan);">trips.spec.ts</td>
+                                                <td>3</td>
+                                                <td>新建行程弹窗校验、添加目的地到行程、删除行程与状态更新</td>
+                                            </tr>
+                                            <tr>
+                                                <td style="font-family: var(--font-mono); color: var(--cyan);">i18n.spec.ts</td>
+                                                <td>3</td>
+                                                <td>中/英语言切换器、跨页面语言状态保持、核心导航与标题双语断言</td>
+                                            </tr>
+                                            <tr>
+                                                <td style="font-family: var(--font-mono); color: var(--cyan);">navigation.spec.ts</td>
+                                                <td>3</td>
+                                                <td>顶栏/底栏全路由跳转、未匹配路径回退、浏览器前进/后退历史栈</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                                <div class="card-dark-alt" style="padding: 12px 16px; font-size: 14px; color: var(--mint);">
+                                    ✓ 共享夹具保障：每个用例前自动清理 <code>travelvista_favorites / trips</code>，全程开启 <code>collectPageErrors</code> 零容忍断言。
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="card-dark-alt reveal reveal-d2" style="padding: 16px 26px; display: flex; justify-content: space-between; align-items: center;">
+                            <span style="font-size: 16px; font-weight: 800; color: var(--amber);">三层定位器抗脆性策略（3-Tier Locator Strategy）：</span>
+                            <span style="font-size: 14.5px; color: var(--slate-300);">Tier 1 首选 <code>getByRole('navigation') + getByRole()</code> 语义消歧 ──► Tier 2 降级 <code>getByTestId()</code> ──► Tier 3 针对 Canvas/图表降级视觉快照与 VLM。</span>
+                        </div>
+                    </div>
+
+                    <div class="slide-footer">
+                        <span>TravelVista · Agentic UI Testing Architecture</span>
+                        <span>09 / 13</span>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ===========================================
+                 SLIDE 10 — VISUAL REGRESSION & VLM (LIGHT)
+                 =========================================== -->
+            <section class="slide slide-light" data-title="视觉回归工程与 GPT-4o VLM 语义复核双层漏斗">
+                <div class="top-accent-strip"></div>
+                <div class="slide-inner">
+                    <div class="slide-header reveal">
+                        <div class="section-kicker">07 / VISUAL REGRESSION &amp; VLM ADJUDICATION</div>
+                        <h2 class="slide-title">视觉回归工程与 GPT-4o VLM 语义复核双层漏斗</h2>
+                        <p class="slide-subtitle">先用五步确定性去抖消除前端动态噪音，再用“原生像素比对 + GPT-4o Vision 语义仲裁”彻底终结一像素误报</p>
+                    </div>
+
+                    <div class="slide-body">
+                        <div class="card-light reveal reveal-d1" style="padding: 20px 26px;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
+                                <span style="font-size: 18px; font-weight: 800; color: var(--teal);">截图前五步确定性去抖流程（tests/fixtures/test-helpers.ts → preparePageForVisualTest）</span>
+                                <span class="pill-badge pill-teal">Zero Flake Stabilization</span>
+                            </div>
+                            <div class="grid-5">
+                                <div class="card-light-subtle">
+                                    <div style="font-family: var(--font-mono); font-size: 13px; color: var(--teal); font-weight: 700; margin-bottom: 4px;">STEP 01 · DOM 就绪</div>
+                                    <div style="font-size: 15px; font-weight: 700; margin-bottom: 4px;">等待水合与渲染完成</div>
+                                    <div style="font-size: 13px; color: var(--slate-500);">domcontentloaded + 稳定帧等待</div>
+                                </div>
+                                <div class="card-light-subtle">
+                                    <div style="font-family: var(--font-mono); font-size: 13px; color: var(--teal); font-weight: 700; margin-bottom: 4px;">STEP 02 · 冻结计时器</div>
+                                    <div style="font-size: 15px; font-weight: 700; margin-bottom: 4px;">清理轮播 setInterval</div>
+                                    <div style="font-size: 13px; color: var(--slate-500);">拦截首页 5s 轮播与 6s 评价自动滚动</div>
+                                </div>
+                                <div class="card-light-subtle">
+                                    <div style="font-family: var(--font-mono); font-size: 13px; color: var(--teal); font-weight: 700; margin-bottom: 4px;">STEP 03 · 禁用动画</div>
+                                    <div style="font-size: 15px; font-weight: 700; margin-bottom: 4px;">注入全局禁动画 CSS</div>
+                                    <div style="font-size: 13px; color: var(--slate-500);">animation/transition-duration: 0s !important</div>
+                                </div>
+                                <div class="card-light-subtle">
+                                    <div style="font-family: var(--font-mono); font-size: 13px; color: var(--teal); font-weight: 700; margin-bottom: 4px;">STEP 04 · 触发懒加载</div>
+                                    <div style="font-size: 15px; font-weight: 700; margin-bottom: 4px;">移除 loading="lazy"</div>
+                                    <div style="font-size: 13px; color: var(--slate-500);">全页平滑滚动到底再回到顶部</div>
+                                </div>
+                                <div class="card-light-subtle">
+                                    <div style="font-family: var(--font-mono); font-size: 13px; color: var(--teal); font-weight: 700; margin-bottom: 4px;">STEP 05 · 资源全就绪</div>
+                                    <div style="font-size: 15px; font-weight: 700; margin-bottom: 4px;">字体与图片 100% 解码</div>
+                                    <div style="font-size: 13px; color: var(--slate-500);">document.fonts.ready + img.complete</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div style="display: grid; grid-template-columns: 840px 876px; gap: 28px; height: 470px;" class="reveal reveal-d2">
+                            <div class="card-light" style="display: flex; flex-direction: column; justify-content: space-between;">
+                                <div>
+                                    <span class="pill-badge pill-purple" style="margin-bottom: 12px;">24 GOLDEN SNAPSHOTS · 多维视觉基线矩阵</span>
+                                    <h3 style="font-size: 23px; font-weight: 800; margin-bottom: 12px;">覆盖 6 大核心页面 × 双端视口 × 中英双语 + 关键组件区域</h3>
+                                    <table class="data-table">
+                                        <thead>
+                                            <tr>
+                                                <th>测试维度</th>
+                                                <th>覆盖范围</th>
+                                                <th>快照数量</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr>
+                                                <td style="font-weight: 700;">桌面端全页快照 (1280×720)</td>
+                                                <td>首页、目的地、详情、行程、收藏、关于我们（zh + en）</td>
+                                                <td style="font-family: var(--font-mono); font-weight: 700;">12 张</td>
+                                            </tr>
+                                            <tr>
+                                                <td style="font-weight: 700;">移动端响应式快照 (375×812)</td>
+                                                <td>6 大核心页面移动端自适应布局与汉堡菜单态</td>
+                                                <td style="font-family: var(--font-mono); font-weight: 700;">6 张</td>
+                                            </tr>
+                                            <tr>
+                                                <td style="font-weight: 700;">局部组件与交互态快照</td>
+                                                <td>导航栏、页脚、搜索栏、精选卡片网格、筛选激活态、弹窗</td>
+                                                <td style="font-family: var(--font-mono); font-weight: 700;">6 张</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                                <div class="card-light-subtle" style="font-size: 14px; color: var(--coral); font-weight: 700;">
+                                    ! 基线安全红线：测试对比失败时严禁自动执行 <code>--update-snapshots</code>，必须经人工或 VLM 复核确认！
+                                </div>
+                            </div>
+
+                            <div class="card-dark" style="display: flex; flex-direction: column; justify-content: space-between;">
+                                <div>
+                                    <span class="pill-badge pill-cyan" style="margin-bottom: 12px;">DUAL-LAYER VERDICT · 像素 + GPT-4o VLM 双层裁决漏斗</span>
+                                    <h3 style="font-size: 23px; font-weight: 800; margin-bottom: 14px; color: var(--white);">用 5% 的按需 AI 算力消除 95% 的像素误报噪音</h3>
+                                    <div style="display: grid; gap: 14px;">
+                                        <div class="card-dark-alt" style="padding: 14px 18px;">
+                                            <div style="font-size: 16px; font-weight: 800; color: var(--mint); margin-bottom: 4px;">第一层 · Playwright 原生像素比对（拦截 95% 常规流量）</div>
+                                            <div style="font-size: 14px; color: var(--slate-300);">执行 <code>toHaveScreenshot({ maxDiffPixelRatio: 0.01 })</code>，毫秒级、0 Token；若像素一致直接 PASS 放行。</div>
+                                        </div>
+                                        <div class="card-dark-alt" style="padding: 14px 18px;">
+                                            <div style="font-size: 16px; font-weight: 800; color: var(--cyan); margin-bottom: 4px;">第二层 · Azure OpenAI GPT-4o Vision 语义仲裁（仅失败时触发）</div>
+                                            <div style="font-size: 14px; color: var(--slate-300);">传入 <strong>Baseline / Actual / Diff</strong> 三张图与结构化 Prompt，输出 <code>severity</code> 与置信度：若判定为抗锯齿微差且 <code>confidence ≥ 0.7</code>，自动降级为软通过（Soft Pass）。</div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="card-dark-alt" style="padding: 12px 18px; font-family: var(--font-mono); font-size: 13px; color: var(--amber);">
+                                    成本护栏：内置 maxCallsPerRun=20 调用上限、指数退避重试与无密钥 Graceful Degradation 自动降级。
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="slide-footer">
+                        <span>TravelVista · Agentic UI Testing Architecture</span>
+                        <span>10 / 13</span>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ===========================================
+                 SLIDE 11 — CLOUD & CI/CD GOVERNANCE (DARK)
+                 =========================================== -->
+            <section class="slide slide-dark" data-title="CI/CD 三阶段流水线与 Azure 跨平台视觉治理">
+                <div class="top-accent-strip"></div>
+                <div class="slide-inner">
+                    <div class="slide-header reveal">
+                        <div class="section-kicker">08 / CLOUD &amp; CI/CD GOVERNANCE</div>
+                        <h2 class="slide-title">CI/CD 三阶段流水线与 Azure 跨平台视觉治理</h2>
+                        <p class="slide-subtitle">由 ui-test-governance 统管本地极速拦截、Azure 云端 10 并发浏览器矩阵与跨操作系统快照权威策略</p>
+                    </div>
+
+                    <div class="slide-body">
+                        <div class="grid-3 reveal reveal-d1" style="height: 290px;">
+                            <div class="card-dark" style="display: flex; flex-direction: column; justify-content: space-between;">
+                                <div>
+                                    <span class="pill-badge pill-mint" style="margin-bottom: 10px;">STAGE 01 · 本地极速门禁 (GitHub Runner)</span>
+                                    <h3 style="font-size: 22px; font-weight: 800; margin-bottom: 8px;">Lint + Build + CT 组件测试</h3>
+                                    <p style="font-size: 15px; color: var(--slate-300); line-height: 1.55;">
+                                        不消耗任何云端配额，第一时间在 Runner 本地秒级拦截 TypeScript 编译错误、代码规范问题与 9 个组件的契约破坏。
+                                    </p>
+                                </div>
+                                <div style="font-family: var(--font-mono); font-size: 13.5px; color: var(--mint);">耗时：~25s · 成本：0 云端配额</div>
+                            </div>
+
+                            <div class="card-dark" style="display: flex; flex-direction: column; justify-content: space-between;">
+                                <div>
+                                    <span class="pill-badge pill-cyan" style="margin-bottom: 10px;">STAGE 02 · 云端高并发回归 (Azure PT)</span>
+                                    <h3 style="font-size: 22px; font-weight: 800; margin-bottom: 8px;">Azure 10 Workers 并行 E2E</h3>
+                                    <p style="font-size: 15px; color: var(--slate-300); line-height: 1.55;">
+                                        通过 <code>playwright.service.config.ts</code> 连接 Azure 云端浏览器池，开启 <code>exposeNetwork: '&lt;loopback&gt;'</code> 安全穿透测试本地构建服务。
+                                    </p>
+                                </div>
+                                <div style="font-family: var(--font-mono); font-size: 13.5px; color: var(--cyan);">支持 OIDC 免密认证与无密钥自动本地回退</div>
+                            </div>
+
+                            <div class="card-dark" style="display: flex; flex-direction: column; justify-content: space-between;">
+                                <div>
+                                    <span class="pill-badge pill-purple" style="margin-bottom: 10px;">STAGE 03 · 视觉门禁与产物归档</span>
+                                    <h3 style="font-size: 22px; font-weight: 800; margin-bottom: 8px;">Visual 比对 + VLM + 14 天归档</h3>
+                                    <p style="font-size: 15px; color: var(--slate-300); line-height: 1.55;">
+                                        执行 24 张跨视口视觉快照比对与按需 VLM 复核，无论成功或失败均上传 HTML 报告、Trace 轨迹与差异图（保留 14 天）。
+                                    </p>
+                                </div>
+                                <div style="font-family: var(--font-mono); font-size: 13.5px; color: #A78BFA;">Artifact: playwright-report + test-results</div>
+                            </div>
+                        </div>
+
+                        <div style="display: grid; grid-template-columns: 920px 796px; gap: 28px; height: 410px;" class="reveal reveal-d2">
+                            <div class="card-dark" style="display: flex; flex-direction: column; justify-content: space-between;">
+                                <div>
+                                    <span class="pill-badge pill-amber" style="margin-bottom: 10px;">CROSS-OS BASELINE AUTHORITY · 跨平台基线治理</span>
+                                    <h3 style="font-size: 22px; font-weight: 800; margin-bottom: 12px;">解决 macOS (<code>-darwin</code>) 与 Linux (<code>-linux</code>) 字体渲染不一致难题</h3>
+                                    <table class="data-table">
+                                        <thead>
+                                            <tr>
+                                                <th>基线权威模式</th>
+                                                <th>适用场景</th>
+                                                <th>工程规则与快照后缀治理</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr>
+                                                <td style="font-weight: 700; color: var(--mint);">模式 A · Local-Only</td>
+                                                <td>个人开发与本地快速调试</td>
+                                                <td>本地生成并比对 <code>*-darwin.png</code>，不阻塞云端流水线</td>
+                                            </tr>
+                                            <tr>
+                                                <td style="font-weight: 700; color: var(--cyan);">模式 B · Azure Linux 权威</td>
+                                                <td>团队 PR 准入门禁（推荐）</td>
+                                                <td>统一通过云端/容器 Linux 浏览器生成权威基线，消除 OS 差异</td>
+                                            </tr>
+                                            <tr>
+                                                <td style="font-weight: 700; color: #A78BFA;">模式 C · Hybrid 混合复核</td>
+                                                <td>跨端渐进迁移期</td>
+                                                <td>本地开发自检 + CI 走 Linux 基线配合 VLM 过滤跨平台字重微差</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                                <div style="font-size: 14px; color: var(--slate-300);">
+                                    ★ 根因治理：Playwright 默认将 <code>process.platform</code> 拼入快照文件名，显式权威策略避免了在 Linux CI 中因找不到 <code>-linux.png</code> 而全军覆没。
+                                </div>
+                            </div>
+
+                            <div class="card-dark" style="display: flex; flex-direction: column; justify-content: space-between;">
+                                <div>
+                                    <span class="pill-badge pill-coral" style="margin-bottom: 10px;">SECURITY &amp; CREDENTIAL REDLINE · 安全与成本护栏</span>
+                                    <h3 style="font-size: 22px; font-weight: 800; margin-bottom: 12px;">企业级凭据隔离与云端韧性设计</h3>
+                                    <div style="display: grid; gap: 12px;">
+                                        <div class="card-dark-alt" style="padding: 12px 16px;">
+                                            <div style="font-weight: 700; color: var(--coral); font-size: 15px; margin-bottom: 4px;">① 密钥零落盘铁律</div>
+                                            <div style="font-size: 13.5px; color: var(--slate-300);">所有 <code>PLAYWRIGHT_SERVICE_URL</code> 与 <code>AZURE_OPENAI_API_KEY</code> 仅通过一次性环境变量或 GitHub Secrets 注入，绝不硬编码入库。</div>
+                                        </div>
+                                        <div class="card-dark-alt" style="padding: 12px 16px;">
+                                            <div style="font-weight: 700; color: var(--cyan); font-size: 15px; margin-bottom: 4px;">② Azure Entra ID (DefaultAzureCredential) 优先</div>
+                                            <div style="font-size: 13.5px; color: var(--slate-300);">支持 <code>az login</code> 与 GitHub OIDC 联邦令牌认证，无需长期维护静态 Access Token。</div>
+                                        </div>
+                                        <div class="card-dark-alt" style="padding: 12px 16px;">
+                                            <div style="font-weight: 700; color: var(--mint); font-size: 15px; margin-bottom: 4px;">③ 优雅降级（Graceful Fallback）</div>
+                                            <div style="font-size: 13.5px; color: var(--slate-300);">未配置云端环境变量或 Fork PR 无权访问 Secrets 时，脚本自动回退至本地无头 Chromium 执行。</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="slide-footer">
+                        <span>TravelVista · Agentic UI Testing Architecture</span>
+                        <span>11 / 13</span>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ===========================================
+                 SLIDE 12 — DELIVERABLES & OBSERVABILITY (LIGHT)
+                 =========================================== -->
+            <section class="slide slide-light" data-title="全链路可观测性与标准化交付物矩阵">
+                <div class="top-accent-strip"></div>
+                <div class="slide-inner">
+                    <div class="slide-header reveal">
+                        <div class="section-kicker">09 / DELIVERABLES &amp; FULL-LINK OBSERVABILITY</div>
+                        <h2 class="slide-title">全链路可观测性与标准化交付物矩阵</h2>
+                        <p class="slide-subtitle">每一次探索、生成、执行与代码审查均沉淀为版本化工程资产，让任何失败都能在 1 分钟内定位根因</p>
+                    </div>
+
+                    <div class="slide-body">
+                        <div class="grid-3 reveal reveal-d1" style="height: 550px;">
+                            <div class="card-light" style="display: flex; flex-direction: column; justify-content: space-between;">
+                                <div>
+                                    <span class="pill-badge pill-teal" style="margin-bottom: 12px;">DELIVERABLE 01 · 前置探索契约资产</span>
+                                    <h3 style="font-size: 24px; font-weight: 800; margin-bottom: 12px;">站点发现与定位器契约报告</h3>
+                                    <code class="code-chip" style="margin-bottom: 16px;">docs/DEEP_DISCOVERY_REPORT.md<br />docs/LOCATOR_STRATEGY_REPORT.md</code>
+                                    <p style="font-size: 15.5px; line-height: 1.6; color: var(--slate-700); margin-bottom: 12px;">
+                                        • 顶部内嵌 <code>&lt;!-- git-commit --&gt;</code> 缓存指纹，源码未变秒级复用。<br />
+                                        • 完整记录 8 条路由、9 个组件接口、双语键名与运行时 DOM 探索结论。<br />
+                                        • 明确全站推荐语义定位器与严格模式消歧规则。
+                                    </p>
+                                </div>
+                                <div class="card-light-subtle" style="font-size: 14px; font-weight: 700; color: var(--teal);">
+                                    维护者：ui-test-discovery（单一写入源）
+                                </div>
+                            </div>
+
+                            <div class="card-light" style="display: flex; flex-direction: column; justify-content: space-between;">
+                                <div>
+                                    <span class="pill-badge pill-purple" style="margin-bottom: 12px;">DELIVERABLE 02 · 分段归属测试与审查总表</span>
+                                    <h3 style="font-size: 24px; font-weight: 800; margin-bottom: 12px;">多 Agent 协同只读诊断报告</h3>
+                                    <code class="code-chip" style="margin-bottom: 16px;">docs/TEST_REPORT.md<br />docs/CODE_REVIEW_REPORT.md</code>
+                                    <p style="font-size: 15.5px; line-height: 1.6; color: var(--slate-700); margin-bottom: 12px;">
+                                        • <code>TEST_REPORT.md</code> 按 Overview / CT / E2E / Visual / Governance 划分章节所有权，各 Agent 仅更新专属段落。<br />
+                                        • 详细记录通过率、失败复现步骤、根因分类与修复建议。<br />
+                                        • <code>CODE_REVIEW_REPORT.md</code> 独立输出 P0–P3 六维代码审计结论。
+                                    </p>
+                                </div>
+                                <div class="card-light-subtle" style="font-size: 14px; font-weight: 700; color: var(--purple);">
+                                    维护者：各执行 Agent 增量更新 · 100% Report-Only
+                                </div>
+                            </div>
+
+                            <div class="card-light" style="display: flex; flex-direction: column; justify-content: space-between;">
+                                <div>
+                                    <span class="pill-badge pill-mint" style="margin-bottom: 12px;">DELIVERABLE 03 · 交互式回放与视觉报告</span>
+                                    <h3 style="font-size: 24px; font-weight: 800; margin-bottom: 12px;">HTML 报告、Trace 时间轴与 VLM 三图视图</h3>
+                                    <code class="code-chip" style="margin-bottom: 16px;">playwright-report/index.html<br />test-results/vlm-report.html</code>
+                                    <p style="font-size: 15.5px; line-height: 1.6; color: var(--slate-700); margin-bottom: 12px;">
+                                        • <strong>Playwright Trace：</strong>失败重试自动录制 DOM 快照、控制台日志与网络瀑布流。<br />
+                                        • <strong>VLM 视觉报告：</strong>Baseline / Actual / Diff 三图并排对比，展示 GPT-4o 语义裁决理由与置信度评分。
+                                    </p>
+                                </div>
+                                <div class="card-light-subtle" style="font-size: 14px; font-weight: 700; color: var(--mint);">
+                                    支持本地一键打开与 CI Artifacts 14 天回溯
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="card-dark reveal reveal-d2" style="padding: 18px 28px; display: flex; justify-content: space-between; align-items: center;">
+                            <div style="font-family: var(--font-mono); font-size: 14.5px; color: var(--slate-300);">
+                                <strong style="color: var(--cyan);">仓库资产结构：</strong>
+                                <code>.github/agents/ (7)</code> · <code>.github/skills/ (9)</code> · <code>src/components/__tests__/ (9 CT)</code> · <code>tests/e2e/ (6 E2E)</code> · <code>tests/visual/ (24 Snapshots + VLM)</code>
+                            </div>
+                            <span class="pill-badge pill-cyan">100% Version Controlled</span>
+                        </div>
+                    </div>
+
+                    <div class="slide-footer">
+                        <span>TravelVista · Agentic UI Testing Architecture</span>
+                        <span>12 / 13</span>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ===========================================
+                 SLIDE 13 — EVOLUTION ROADMAP & SUMMARY (DARK)
+                 =========================================== -->
+            <section class="slide slide-dark" data-title="演进路线图与核心架构总结">
+                <div class="top-accent-strip"></div>
+                <div class="slide-inner">
+                    <div class="slide-header reveal">
+                        <div class="section-kicker">10 / EVOLUTION ROADMAP &amp; TAKEAWAY</div>
+                        <h2 class="slide-title">演进路线图与核心架构总结</h2>
+                        <p class="slide-subtitle">从“多通道协同自动化底座”持续演进至“全维无障碍、契约化 POM 与混沌韧性质量工程”</p>
+                    </div>
+
+                    <div class="slide-body">
+                        <div class="grid-3 reveal reveal-d1" style="height: 530px;">
+                            <div class="card-dark" style="display: flex; flex-direction: column; justify-content: space-between;">
+                                <div>
+                                    <span class="pill-badge pill-mint" style="margin-bottom: 14px;">PHASE 01 · 已落地核心底座 (Current)</span>
+                                    <h3 style="font-size: 25px; font-weight: 800; margin-bottom: 16px;">多通道探索与全金字塔闭环</h3>
+                                    <div style="display: grid; gap: 12px;">
+                                        <div class="card-dark-alt" style="padding: 12px 16px; font-size: 15px;">✓ 7 个专业 Agent × 9 个可复用 Skill 分层解耦</div>
+                                        <div class="card-dark-alt" style="padding: 12px 16px; font-size: 15px;">✓ AST + Browser Use + CLI + Computer Use 四通道接力</div>
+                                        <div class="card-dark-alt" style="padding: 12px 16px; font-size: 15px;">✓ 9 CT + 21 E2E + 24 视觉快照 + GPT-4o VLM 语义复核</div>
+                                        <div class="card-dark-alt" style="padding: 12px 16px; font-size: 15px;">✓ Git Commit 探索缓存指纹与 6-Gate 质量门控</div>
+                                    </div>
+                                </div>
+                                <div style="font-family: var(--font-mono); font-size: 13.5px; color: var(--mint); font-weight: 700;">STATUS: PRODUCTION READY</div>
+                            </div>
+
+                            <div class="card-dark" style="display: flex; flex-direction: column; justify-content: space-between;">
+                                <div>
+                                    <span class="pill-badge pill-cyan" style="margin-bottom: 14px;">PHASE 02 · 近期工程加固 (Next)</span>
+                                    <h3 style="font-size: 25px; font-weight: 800; margin-bottom: 16px;">CI 全门禁合入与跨平台统一</h3>
+                                    <div style="display: grid; gap: 12px;">
+                                        <div class="card-dark-alt" style="padding: 12px 16px; font-size: 15px;">• 将 Lint / Build / CT Stage 正式合入主干 PR 必过门禁</div>
+                                        <div class="card-dark-alt" style="padding: 12px 16px; font-size: 15px;">• 基于 Docker / Azure Linux 容器统一生成 <code>-linux.png</code> 权威基线</div>
+                                        <div class="card-dark-alt" style="padding: 12px 16px; font-size: 15px;">• 将 <code>collectPageErrors</code> 升级为全局 automatic fixture 零容忍断言</div>
+                                        <div class="card-dark-alt" style="padding: 12px 16px; font-size: 15px;">• 建立 SSO 扫码 <code>storageState</code> 自动刷新与过期预警机制</div>
+                                    </div>
+                                </div>
+                                <div style="font-family: var(--font-mono); font-size: 13.5px; color: var(--cyan); font-weight: 700;">FOCUS: CI GATE &amp; LINUX BASELINE</div>
+                            </div>
+
+                            <div class="card-dark" style="display: flex; flex-direction: column; justify-content: space-between;">
+                                <div>
+                                    <span class="pill-badge pill-purple" style="margin-bottom: 14px;">PHASE 03 · 中长期演进 (Future)</span>
+                                    <h3 style="font-size: 25px; font-weight: 800; margin-bottom: 16px;">无障碍合规与全维韧性测试</h3>
+                                    <div style="display: grid; gap: 12px;">
+                                        <div class="card-dark-alt" style="padding: 12px 16px; font-size: 15px;">• 集成 <code>@axe-core/playwright</code> 实现 WCAG 2.1 AA 自动审计</div>
+                                        <div class="card-dark-alt" style="padding: 12px 16px; font-size: 15px;">• 提炼 <code>tests/pages/</code> 共享 Page Object Model (POM) 复用层</div>
+                                        <div class="card-dark-alt" style="padding: 12px 16px; font-size: 15px;">• 扩展 WebKit (Safari) 与移动端真机视口回归矩阵</div>
+                                        <div class="card-dark-alt" style="padding: 12px 16px; font-size: 15px;">• 引入 <code>page.route()</code> 网络超时、500 故障注入与弱网韧性验证</div>
+                                    </div>
+                                </div>
+                                <div style="font-family: var(--font-mono); font-size: 13.5px; color: #A78BFA; font-weight: 700;">FOCUS: A11Y &amp; RESILIENCE</div>
+                            </div>
+                        </div>
+
+                        <div class="card-dark-alt reveal reveal-d2" style="padding: 24px 36px; display: flex; justify-content: space-between; align-items: center;">
+                            <div>
+                                <div style="font-family: var(--font-display); font-size: 26px; font-weight: 800; color: var(--white); margin-bottom: 6px;">
+                                    “以 AI 多通道探索打破覆盖边界，以确定性代码与门控筑牢质量底线。”
+                                </div>
+                                <div style="font-size: 16px; color: var(--cyan);">
+                                    Explore with Multi-Modal AI · Enforce with Deterministic Playwright · Adjudicate with Vision LLM
+                                </div>
+                            </div>
+                            <span class="pill-badge pill-mint" style="font-size: 15px; padding: 10px 22px;">THANK YOU · Q&amp;A</span>
+                        </div>
+                    </div>
+
+                    <div class="slide-footer">
+                        <span>TravelVista · Agentic UI Testing Architecture</span>
+                        <span>13 / 13</span>
+                    </div>
+                </div>
+            </section>
+
+        </main>
+    </div>
+
+    <!-- Floating Navigation Controls (Outside 1920×1080 Stage) -->
+    <nav class="deck-controls" aria-label="Slide navigation">
+        <button class="nav-btn" id="prevBtn" title="上一页 (←)">‹</button>
+        <div class="progress-dots" id="progressDots"></div>
+        <span id="slideCounter" style="min-width: 58px; text-align: center;">01 / 13</span>
+        <button class="nav-btn" id="nextBtn" title="下一页 (→)">›</button>
+        <span class="nav-divider" aria-hidden="true"></span>
+        <button class="nav-btn fullscreen-btn" id="fullscreenBtn" title="切换全屏演示 (F)" aria-label="切换全屏演示">
+            <svg id="fullscreenIcon" viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"></path>
+            </svg>
+            <span id="fullscreenLabel">全屏</span>
+        </button>
+    </nav>
+
+    <script>
+        /* ===========================================
+           SLIDE PRESENTATION CONTROLLER
+           Handles 1920×1080 fixed-stage scaling, keyboard/touch/wheel nav, and progress bar
+           =========================================== */
+        class SlidePresentation {
+            constructor() {
+                this.slides = Array.from(document.querySelectorAll('.slide'));
+                this.currentSlide = 0;
+                this.stage = document.getElementById('deckStage');
+                this.counterEl = document.getElementById('slideCounter');
+                this.dotsContainer = document.getElementById('progressDots');
+                this.wheelLocked = false;
+
+                this.buildDots();
+                this.setupStageScale();
+                this.setupKeyboardNav();
+                this.setupTouchNav();
+                this.setupWheelNav();
+                this.setupButtons();
+
+                const initialHash = parseInt(window.location.hash.replace('#slide-', ''), 10);
+                if (!isNaN(initialHash) && initialHash >= 1 && initialHash <= this.slides.length) {
+                    this.showSlide(initialHash - 1);
+                } else {
+                    this.showSlide(0);
+                }
+            }
+
+            buildDots() {
+                this.slides.forEach((slide, idx) => {
+                    const dot = document.createElement('button');
+                    dot.className = 'progress-dot';
+                    dot.title = `P${idx + 1}: ${slide.dataset.title || ''}`;
+                    dot.setAttribute('aria-label', `Go to slide ${idx + 1}`);
+                    dot.addEventListener('click', () => this.showSlide(idx));
+                    this.dotsContainer.appendChild(dot);
+                });
+            }
+
+            setupStageScale() {
+                this.scaleStage = () => {
+                    const factor = Math.min(window.innerWidth / 1920, window.innerHeight / 1080);
+                    const x = (window.innerWidth - 1920 * factor) / 2;
+                    const y = (window.innerHeight - 1080 * factor) / 2;
+                    this.stage.style.transform = `translate(${x}px, ${y}px) scale(${factor})`;
+                };
+                this.scaleStage();
+                window.addEventListener('resize', this.scaleStage);
+            }
+
+            setupButtons() {
+                document.getElementById('prevBtn').addEventListener('click', () => this.prev());
+                document.getElementById('nextBtn').addEventListener('click', () => this.next());
+
+                const fsBtn = document.getElementById('fullscreenBtn');
+                const fsIcon = document.getElementById('fullscreenIcon');
+                const fsLabel = document.getElementById('fullscreenLabel');
+
+                const updateFullscreenUI = () => {
+                    const isFs = Boolean(document.fullscreenElement || document.webkitFullscreenElement);
+                    fsBtn.classList.toggle('is-fullscreen', isFs);
+                    fsLabel.textContent = isFs ? '退出' : '全屏';
+                    fsIcon.innerHTML = isFs
+                        ? '<path d="M8 3v3a2 2 0 0 1-2 2H3m18 0h-3a2 2 0 0 1-2-2V3m0 18v-3a2 2 0 0 1 2-2h3M3 16h3a2 2 0 0 1 2 2v3"></path>'
+                        : '<path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"></path>';
+                    this.scaleStage();
+                };
+
+                this.toggleFullscreen = () => {
+                    const isFs = Boolean(document.fullscreenElement || document.webkitFullscreenElement);
+                    if (!isFs) {
+                        const root = document.documentElement;
+                        if (root.requestFullscreen) root.requestFullscreen();
+                        else if (root.webkitRequestFullscreen) root.webkitRequestFullscreen();
+                    } else {
+                        if (document.exitFullscreen) document.exitFullscreen();
+                        else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
+                    }
+                };
+
+                fsBtn.addEventListener('click', () => this.toggleFullscreen());
+                document.addEventListener('fullscreenchange', updateFullscreenUI);
+                document.addEventListener('webkitfullscreenchange', updateFullscreenUI);
+            }
+
+            setupKeyboardNav() {
+                document.addEventListener('keydown', (e) => {
+                    if (e.target.getAttribute('contenteditable') === 'true') return;
+                    if (e.key === 'ArrowRight' || e.key === 'PageDown' || e.key === ' ') {
+                        e.preventDefault();
+                        this.next();
+                    } else if (e.key === 'ArrowLeft' || e.key === 'PageUp') {
+                        e.preventDefault();
+                        this.prev();
+                    } else if (e.key === 'Home') {
+                        e.preventDefault();
+                        this.showSlide(0);
+                    } else if (e.key === 'End') {
+                        e.preventDefault();
+                        this.showSlide(this.slides.length - 1);
+                    } else if ((e.key === 'f' || e.key === 'F') && !e.ctrlKey && !e.metaKey && !e.altKey) {
+                        e.preventDefault();
+                        this.toggleFullscreen();
+                    }
+                });
+            }
+
+            setupTouchNav() {
+                let startX = 0;
+                let startY = 0;
+                window.addEventListener('touchstart', (e) => {
+                    startX = e.touches[0].clientX;
+                    startY = e.touches[0].clientY;
+                }, { passive: true });
+
+                window.addEventListener('touchend', (e) => {
+                    const dx = e.changedTouches[0].clientX - startX;
+                    const dy = e.changedTouches[0].clientY - startY;
+                    if (Math.abs(dx) > 45 && Math.abs(dx) > Math.abs(dy)) {
+                        if (dx < 0) this.next();
+                        else this.prev();
+                    }
+                }, { passive: true });
+            }
+
+            setupWheelNav() {
+                window.addEventListener('wheel', (e) => {
+                    if (this.wheelLocked) return;
+                    if (Math.abs(e.deltaY) < 28) return;
+                    this.wheelLocked = true;
+                    if (e.deltaY > 0) this.next();
+                    else this.prev();
+                    setTimeout(() => { this.wheelLocked = false; }, 420);
+                }, { passive: true });
+            }
+
+            next() {
+                if (this.currentSlide < this.slides.length - 1) {
+                    this.showSlide(this.currentSlide + 1);
+                }
+            }
+
+            prev() {
+                if (this.currentSlide > 0) {
+                    this.showSlide(this.currentSlide - 1);
+                }
+            }
+
+            showSlide(index) {
+                this.currentSlide = Math.max(0, Math.min(index, this.slides.length - 1));
+                this.slides.forEach((slide, i) => {
+                    const isActive = i === this.currentSlide;
+                    slide.classList.toggle('active', isActive);
+                    slide.classList.toggle('visible', isActive);
+                });
+                const dots = this.dotsContainer.querySelectorAll('.progress-dot');
+                dots.forEach((d, i) => d.classList.toggle('active', i === this.currentSlide));
+                const num = String(this.currentSlide + 1).padStart(2, '0');
+                const total = String(this.slides.length).padStart(2, '0');
+                this.counterEl.textContent = `${num} / ${total}`;
+                history.replaceState(null, '', `#slide-${this.currentSlide + 1}`);
+            }
+        }
+
+        /* ===========================================
+           INLINE EDITOR CONTROLLER
+           Hover top-left corner or press E to edit text inline; Ctrl/Cmd+S downloads updated HTML
+           =========================================== */
+        class InlineEditor {
+            constructor() {
+                this.isActive = false;
+                this.storageKey = 'travelvista-ui-test-v3-slides-edits';
+                this.editableSelector = 'h1, h2, h3, p, td, th, code, .section-kicker, .slide-subtitle';
+                this.restoreSavedEdits();
+            }
+
+            toggleEditMode() {
+                this.isActive = !this.isActive;
+                document.body.classList.toggle('editing-active', this.isActive);
+                const btn = document.getElementById('editToggle');
+                btn.classList.toggle('active', this.isActive);
+                btn.textContent = this.isActive ? '✓ Editing (Ctrl+S Save)' : '✏️ Edit (E)';
+
+                document.querySelectorAll(this.editableSelector).forEach((el) => {
+                    if (this.isActive) {
+                        el.setAttribute('contenteditable', 'true');
+                        el.addEventListener('input', () => this.saveToLocal());
+                    } else {
+                        el.removeAttribute('contenteditable');
+                    }
+                });
+            }
+
+            saveToLocal() {
+                const state = {};
+                document.querySelectorAll('.slide').forEach((slide, sIdx) => {
+                    state[sIdx] = Array.from(slide.querySelectorAll(this.editableSelector)).map((el) => el.innerHTML);
+                });
+                try {
+                    localStorage.setItem(this.storageKey, JSON.stringify(state));
+                } catch (_) {}
+            }
+
+            restoreSavedEdits() {
+                try {
+                    const raw = localStorage.getItem(this.storageKey);
+                    if (!raw) return;
+                    const state = JSON.parse(raw);
+                    document.querySelectorAll('.slide').forEach((slide, sIdx) => {
+                        if (!state[sIdx]) return;
+                        const els = slide.querySelectorAll(this.editableSelector);
+                        state[sIdx].forEach((html, i) => {
+                            if (els[i]) els[i].innerHTML = html;
+                        });
+                    });
+                } catch (_) {}
+            }
+
+            exportHTML() {
+                const clone = document.documentElement.cloneNode(true);
+                clone.querySelectorAll('[contenteditable]').forEach((el) => el.removeAttribute('contenteditable'));
+                clone.querySelector('body').classList.remove('editing-active');
+                const blob = new Blob(['<!DOCTYPE html>\n' + clone.outerHTML], { type: 'text/html' });
+                const a = document.createElement('a');
+                a.href = URL.createObjectURL(blob);
+                a.download = 'ui-test-solution-v3.html';
+                a.click();
+                URL.revokeObjectURL(a.href);
+            }
+        }
+
+        const deck = new SlidePresentation();
+        const editor = new InlineEditor();
+
+        // 1. Click handler on the toggle button
+        document.getElementById('editToggle').addEventListener('click', () => {
+            editor.toggleEditMode();
+        });
+
+        // 2. Hotzone hover with 400ms grace period
+        const hotzone = document.querySelector('.edit-hotzone');
+        const editToggle = document.getElementById('editToggle');
+        let hideTimeout = null;
+
+        hotzone.addEventListener('mouseenter', () => {
+            clearTimeout(hideTimeout);
+            editToggle.classList.add('show');
+        });
+        hotzone.addEventListener('mouseleave', () => {
+            hideTimeout = setTimeout(() => {
+                if (!editor.isActive) editToggle.classList.remove('show');
+            }, 400);
+        });
+        editToggle.addEventListener('mouseenter', () => {
+            clearTimeout(hideTimeout);
+        });
+        editToggle.addEventListener('mouseleave', () => {
+            hideTimeout = setTimeout(() => {
+                if (!editor.isActive) editToggle.classList.remove('show');
+            }, 400);
+        });
+
+        // 3. Hotzone direct click
+        hotzone.addEventListener('click', () => {
+            editor.toggleEditMode();
+        });
+
+        // 4. Keyboard shortcuts (E to toggle edit mode, Ctrl/Cmd+S to download HTML)
+        document.addEventListener('keydown', (e) => {
+            if ((e.key === 'e' || e.key === 'E') && !e.target.getAttribute('contenteditable')) {
+                editor.toggleEditMode();
+            }
+            if ((e.ctrlKey || e.metaKey) && (e.key === 's' || e.key === 'S')) {
+                e.preventDefault();
+                editor.exportHTML();
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,4 +1,4 @@
-export const VLM_SYSTEM_PROMPT = `You are a senior UI/UX quality assurance engineer specializing in visual regression testing. Your job is to compare two screenshots of a web page — a BASELINE (the approved reference) and an ACTUAL (the current build) — and determine whether the differences constitute a real visual regression bug or acceptable rendering noise.
+export const VLM_SYSTEM_PROMPT = `You are a senior UI/UX quality assurance engineer specializing in visual regression testing. Your job is to compare UI screenshots of a web page — a BASELINE (the approved reference), an ACTUAL (the current build), and an optional DIFF pixel-highlight map (where changed pixels are highlighted in red/magenta) — and determine whether the differences constitute a real visual regression bug or acceptable rendering noise.
 
 ## Severity Levels
 
@@ -8,7 +8,7 @@ Classify every diff into exactly one severity level:
 No visible difference, or differences only detectable at sub-pixel zoom level.
 
 ### "cosmetic"
-Differences that are visible upon close inspection but do NOT affect usability or readability.
+Differences that are visible upon close inspection but do NOT affect usability or readability (e.g., sub-pixel font anti-aliasing across OS/GPU engines, ±1px border rounding).
 
 ### "minor"
 Differences that are noticeable but do NOT break functionality or significantly degrade UX.
@@ -37,6 +37,7 @@ export interface VlmPromptContext {
   route?: string;
   viewport?: string;
   language?: string;
+  hasDiffImage?: boolean;
 }
 
 export function buildUserPrompt(context: VlmPromptContext): string {
@@ -45,5 +46,9 @@ export function buildUserPrompt(context: VlmPromptContext): string {
   if (context.viewport) parts.push(`Viewport: ${context.viewport}`);
   if (context.language) parts.push(`Language: ${context.language}`);
 
-  return `Compare the two attached UI screenshots and return your JSON verdict only.\n\nContext:\n${parts.join('\n')}`;
+  const imageGuide = context.hasDiffImage
+    ? 'Attached images in order:\n1. BASELINE (approved reference)\n2. ACTUAL (current build)\n3. DIFF (pixel-level highlight mask of changed regions)'
+    : 'Attached images in order:\n1. BASELINE (approved reference)\n2. ACTUAL (current build)';
+
+  return `Compare the attached UI screenshots and return your JSON verdict only.\n\nContext:\n${parts.join('\n')}\n\n${imageGuide}`;
 }

@@ -6,11 +6,28 @@ on:
   pull_request:
     branches: [main]
   workflow_dispatch:
+    inputs:
+      enable_vlm_review:
+        description: 'Enable GPT-4o VLM semantic visual review (advisory)'
+        required: false
+        default: false
+        type: boolean
+      update_linux_baselines:
+        description: 'Generate Linux (-linux.png) visual baselines and upload as artifact'
+        required: false
+        default: false
+        type: boolean
+
+permissions:
+  id-token: write
+  contents: read
 
 jobs:
-  test:
+  # Stage 1: Fast local gate (< 2 min) — ESLint + TypeScript/Vite build + Playwright CT
+  stage1-fast-gate:
+    name: Stage 1 · Lint, Build & Component Tests (CT)
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
 
@@ -21,33 +38,155 @@ jobs:
 
       - run: npm ci
 
-      - run: npx playwright install --with-deps chromium
+      - name: Run ESLint
+        run: npm run lint
+
+      - name: Build production bundle
+        run: npm run build
+
+      - name: Install Chromium for Playwright CT
+        run: npx playwright install --with-deps chromium
+
+      - name: Run Playwright Component Tests (CT)
+        run: npm run test:ct
+
+  # Stage 2: E2E Journey Gate — Azure Playwright Workspace (20 workers) with local fallback
+  stage2-e2e-gate:
+    name: Stage 2 · E2E Tests (Azure Cloud / Local Fallback)
+    needs: stage1-fast-gate
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      - name: Azure Login via OIDC (when Entra ID secrets are configured)
+        if: ${{ secrets.AZURE_CLIENT_ID != '' && secrets.AZURE_TENANT_ID != '' && secrets.AZURE_SUBSCRIPTION_ID != '' }}
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Install local Chromium (when Azure Workspace is not configured)
+        if: ${{ secrets.PLAYWRIGHT_SERVICE_URL == '' }}
+        run: npx playwright install --with-deps chromium
 
       - name: Run E2E tests on Azure Playwright Workspace
+        if: ${{ secrets.PLAYWRIGHT_SERVICE_URL != '' }}
         run: npx playwright test --config=playwright.service.config.ts --project=e2e
         env:
           PLAYWRIGHT_SERVICE_URL: ${{ secrets.PLAYWRIGHT_SERVICE_URL }}
           PLAYWRIGHT_SERVICE_ACCESS_TOKEN: ${{ secrets.PLAYWRIGHT_SERVICE_ACCESS_TOKEN }}
 
-      - name: Run Visual Regression tests on Azure Playwright Workspace
-        run: npx playwright test --config=playwright.service.config.ts --project=visual
+      - name: Run E2E tests on local headless Chromium (Fork / No-Secret Fallback)
+        if: ${{ secrets.PLAYWRIGHT_SERVICE_URL == '' }}
+        run: npm run test:e2e
+
+      - name: Upload E2E report
+        uses: actions/upload-artifact@v4
+        if: ${{ !cancelled() }}
+        with:
+          name: playwright-e2e-report
+          path: |
+            playwright-report/
+            test-results/
+          retention-days: 14
+
+  # Stage 3: Visual Regression & Optional VLM Advisory Gate
+  stage3-visual-gate:
+    name: Stage 3 · Visual Regression & VLM Review
+    needs: stage1-fast-gate
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      VLM_REVIEW: ${{ inputs.enable_vlm_review && 'true' || 'false' }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      - name: Azure Login via OIDC (when Entra ID secrets are configured)
+        if: ${{ secrets.AZURE_CLIENT_ID != '' && secrets.AZURE_TENANT_ID != '' && secrets.AZURE_SUBSCRIPTION_ID != '' }}
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Install local Chromium (when Azure Workspace is not configured)
+        if: ${{ secrets.PLAYWRIGHT_SERVICE_URL == '' }}
+        run: npx playwright install --with-deps chromium
+
+      - name: Generate Linux (-linux.png) baselines (workflow_dispatch only)
+        if: ${{ inputs.update_linux_baselines == true }}
+        run: |
+          if [ -n "${PLAYWRIGHT_SERVICE_URL:-}" ]; then
+            npx playwright test --config=playwright.service.config.ts --project=visual --update-snapshots
+          else
+            npx playwright test --project=visual --update-snapshots
+          fi
         env:
           PLAYWRIGHT_SERVICE_URL: ${{ secrets.PLAYWRIGHT_SERVICE_URL }}
           PLAYWRIGHT_SERVICE_ACCESS_TOKEN: ${{ secrets.PLAYWRIGHT_SERVICE_ACCESS_TOKEN }}
           VLM_REVIEW: 'false'
 
-      - name: Upload test report
+      - name: Upload generated Linux visual baselines for review
+        if: ${{ inputs.update_linux_baselines == true }}
         uses: actions/upload-artifact@v4
-        if: ${{ !cancelled() }}
         with:
-          name: playwright-report
-          path: playwright-report/
+          name: linux-visual-baselines
+          path: tests/visual/**/*-linux.png
           retention-days: 14
 
-      - name: Upload test results
+      - name: Check authoritative Linux visual baselines
+        id: linux_baselines
+        if: ${{ inputs.update_linux_baselines != true }}
+        run: |
+          count=$(find tests/visual -name "*-linux.png" | wc -l | tr -d ' ')
+          echo "count=${count}" >> "$GITHUB_OUTPUT"
+          if [ "${count}" -eq 0 ]; then
+            echo "::warning::No *-linux.png visual baselines committed yet (found macOS *-darwin.png only). Run 'npm run test:visual:linux-baselines' or trigger workflow_dispatch with update_linux_baselines=true to generate Linux authority snapshots."
+          fi
+
+      - name: Run Visual Regression on Azure Playwright Workspace
+        if: ${{ inputs.update_linux_baselines != true && steps.linux_baselines.outputs.count != '0' && secrets.PLAYWRIGHT_SERVICE_URL != '' }}
+        run: npx playwright test --config=playwright.service.config.ts --project=visual
+        env:
+          PLAYWRIGHT_SERVICE_URL: ${{ secrets.PLAYWRIGHT_SERVICE_URL }}
+          PLAYWRIGHT_SERVICE_ACCESS_TOKEN: ${{ secrets.PLAYWRIGHT_SERVICE_ACCESS_TOKEN }}
+          AZURE_OPENAI_ENDPOINT: ${{ secrets.AZURE_OPENAI_ENDPOINT }}
+          AZURE_OPENAI_API_KEY: ${{ secrets.AZURE_OPENAI_API_KEY }}
+          AZURE_OPENAI_DEPLOYMENT: ${{ secrets.AZURE_OPENAI_DEPLOYMENT }}
+
+      - name: Run Visual Regression on local Linux Chromium (Fallback)
+        if: ${{ inputs.update_linux_baselines != true && steps.linux_baselines.outputs.count != '0' && secrets.PLAYWRIGHT_SERVICE_URL == '' }}
+        run: npx playwright test --project=visual
+        env:
+          AZURE_OPENAI_ENDPOINT: ${{ secrets.AZURE_OPENAI_ENDPOINT }}
+          AZURE_OPENAI_API_KEY: ${{ secrets.AZURE_OPENAI_API_KEY }}
+          AZURE_OPENAI_DEPLOYMENT: ${{ secrets.AZURE_OPENAI_DEPLOYMENT }}
+
+      - name: Upload Visual & VLM reports
         uses: actions/upload-artifact@v4
         if: ${{ !cancelled() }}
         with:
-          name: test-results
-          path: test-results/
+          name: playwright-visual-report
+          path: |
+            playwright-report/
+            test-results/
+            vlm-visual-report.html
+            vlm-review-report.json
+          if-no-files-found: ignore
           retention-days: 14

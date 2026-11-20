@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from '../fixtures/e2e-test';
 
 test.describe('Trip planner flow', () => {
   test('creates, edits, enriches, and deletes a trip from a destination detail page', async ({ page }) => {

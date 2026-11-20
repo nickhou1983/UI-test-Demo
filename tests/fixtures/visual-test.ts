@@ -43,7 +43,8 @@ function isPage(target: Page | Locator): target is Page {
 export const test = base.extend<{
   assertScreenshotWithVlm: (options: ScreenshotWithVlmOptions) => Promise<void>;
 }>({
-  assertScreenshotWithVlm: async ({}, use, testInfo) => {
+  // eslint-disable-next-line no-empty-pattern
+  assertScreenshotWithVlm: async ({}, provide, testInfo) => {
     const fn = async ({
       name,
       target,
@@ -112,12 +113,18 @@ export const test = base.extend<{
 
         let vlmResult: VlmReviewResult;
         try {
-          vlmResult = await reviewVisualDiff(baselinePath, actualPath, {
-            pageName,
-            route,
-            viewport,
-            language,
-          });
+          vlmResult = await reviewVisualDiff(
+            baselinePath,
+            actualPath,
+            {
+              pageName,
+              route,
+              viewport,
+              language,
+              diffPath: existsSync(diffPath) ? diffPath : undefined,
+            },
+            existsSync(diffPath) ? diffPath : undefined,
+          );
         } catch (vlmError) {
           vlmResults.push({
             testTitle: testInfo.title,
@@ -189,7 +196,7 @@ export const test = base.extend<{
       }
     };
 
-    await use(fn);
+    await provide(fn);
   },
 });
 

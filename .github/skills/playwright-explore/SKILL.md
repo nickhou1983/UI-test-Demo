@@ -21,20 +21,32 @@ This skill explores and reports **only**. It does NOT fix issues.
 ## Purpose
 
 Explore a live website when **no source code is available** or when URL-first
-reconnaissance is faster than reading the repo. This skill should stay
-self-contained and rely on browser tooling, not repository internals.
+reconnaissance is faster than reading the repo. This skill stays
+self-contained and supports a **Multi-Channel Exploration** architecture:
 
-It uses `playwright-cli` to:
+1. **Channel A — Browser Use (`browser-use` Skill / `browser-use-*` MCP)**
+   - Uses Copilot Browser (`list_browser`, `list_tabs`, `manage_group`, `manage_tab`, `manage_user_tab`, `run_javascript`) on live Chrome/Edge.
+   - Best when reusing an authenticated User Tab, handling SSO/MFA human handoff, or executing fast DOM/I/O inspection via `run_javascript` Code Mode.
+2. **Channel B — `playwright-cli` (CLI Browser Automation)**
+   - Uses `playwright-cli` shell commands (`open`, `snapshot`, `click`, `fill`, `eval`).
+   - Best for clean-room headless/CLI sessions and automatic Playwright snippet recording when Copilot Browser is not active.
+3. **Channel C — Computer Use (`computer-use-*` MCP `exec_js` / `cua`)**
+   - Uses the macOS desktop UI engine (`cua`) **only** when a web interaction crosses out of the DOM into OS-native UI (native file chooser, OS permission sheet, print dialog, or desktop app container).
+   - Translates OS-native interactions back into deterministic Playwright APIs (`setInputFiles`, `context.grantPermissions`, `page.waitForEvent('filechooser')`) for generated test drafts.
+
+Across channels, this skill is used to:
 
 - crawl reachable pages
 - collect a compact site map
-- probe interactive elements
+- probe interactive elements (including DOM and OS-boundary side effects)
 - generate self-contained E2E and visual test drafts
 
 ## When to Use
 
 - User says "test this site: {URL}" without opening a local project
 - User provides a URL and asks to explore or analyze a website
+- User wants to explore an already-open or logged-in browser tab via **Browser Use**
+- User wants to probe a flow that triggers native OS dialogs/file pickers via **Computer Use**
 - No `package.json` in the workspace (or workspace is empty / unrelated)
 - User explicitly states they don't have the source code
 
@@ -44,15 +56,19 @@ Only these inputs are required:
 
 | Input | Required | Notes |
 |-------|----------|-------|
-| target URL | yes | entry point for exploration |
+| target URL or active tab | yes | entry URL, or an existing browser tab to claim via `Browser Use` |
+| preferred channel | no | `auto` (default: Browser Use → `playwright-cli` fallback, Computer Use for OS dialogs), `browser-use`, or `playwright-cli` |
 | crawl depth | no | default `3` |
 | page limit | no | default `20` |
-| auth context | no | cookies, credentials, or token if needed |
+| auth context | no | claimed User Tab (`manage_user_tab`), cookies, credentials, or token |
 | output mode | no | report only, E2E draft, visual draft, or both |
 
 ## Prerequisites
 
-- `playwright-cli` must be available
+- At least one web exploration engine available:
+  - **Browser Use**: `browser-use-*` MCP tools (use `activate` skill if browser connection needs setup), OR
+  - **`playwright-cli`**: `playwright-cli` (or `npx playwright-cli`) available in shell
+- **Optional (for OS-native UI boundary)**: `computer-use-*` MCP (`exec_js`) with macOS Accessibility and Screen Recording permissions granted
 - No other packages or local project setup needed
 
 ## Output Contract
@@ -70,8 +86,39 @@ Produce these artifacts conceptually, even if only some are requested:
 
 ## Workflow
 
+### Phase 0: Channel Selection & Session Setup
+
+1. **Browser Use Path (Preferred for live browser / authenticated sessions)**:
+   - Call `browser-use-list_browser` / `browser-use-list_tabs` (after loading via tool search or `browser-use` skill).
+   - Create an Agent Tab Group with `browser-use-manage_group` and open `{url}` with `browser-use-manage_tab` (or claim an authenticated tab with `browser-use-manage_user_tab`).
+   - Execute DOM/link/state probes via `browser-use-run_javascript`.
+2. **`playwright-cli` Path (Preferred for clean-room CLI sessions)**:
+   - Run the `playwright-cli` commands shown in Phases 1–5 below.
+3. **Computer Use Escalation (When hitting OS-native UI)**:
+   - If a probed element opens an OS-native file dialog, system permission sheet, or desktop window outside the DOM, load `computer-use-exec_js`, inspect the first-call `cua` documentation, handle or dismiss the native UI via `cua`, and record the corresponding Playwright API (`setInputFiles`, `context.grantPermissions`) in the report.
+
 ### Phase 1: Initial Reconnaissance
 
+**Using Browser Use (`run_javascript`):**
+```javascript
+// Run inside the active Agent Tab via browser-use-run_javascript
+({
+  title: document.title,
+  url: location.href,
+  tech: {
+    generator: document.querySelector('meta[name=generator]')?.content,
+    react: !!document.querySelector('[data-reactroot], #root'),
+    vue: !!document.querySelector('[data-v-], #app'),
+    next: !!document.querySelector('#__next'),
+    nuxt: !!document.querySelector('#__nuxt'),
+    svelte: !!document.querySelector('[class*=svelte]'),
+    angular: !!document.querySelector('[ng-version]'),
+  },
+  storageKeys: Object.keys(localStorage),
+})
+```
+
+**Or using `playwright-cli`:**
 ```bash
 # 1. Open the target URL
 playwright-cli open {url}

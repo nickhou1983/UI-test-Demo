@@ -11,6 +11,7 @@ const reporter: ReporterDescription[] = [
 
 if (process.env.VLM_REVIEW === 'true') {
   reporter.push(['./tests/utils/vlm-reporter.ts']);
+  reporter.push(['./tests/utils/vlm-html-reporter.ts']);
 }
 
 /**
@@ -20,7 +21,7 @@ if (process.env.VLM_REVIEW === 'true') {
  * Prerequisites:
  * - npm install -D @azure/playwright @azure/identity
  * - Set PLAYWRIGHT_SERVICE_URL env var (or .env file)
- * - Authenticate via `az login` (Entra ID)
+ * - Authenticate via `az login` / OIDC (`DefaultAzureCredential`) or `PLAYWRIGHT_SERVICE_ACCESS_TOKEN`
  *
  * Usage:
  *   npx playwright test --config=playwright.service.config.ts
@@ -35,7 +36,7 @@ export default defineConfig(
   }),
   {
     retries: process.env.CI ? 2 : 0,
-    workers: process.env.CI ? 10 : undefined,
+    workers: process.env.CI ? 20 : undefined,
     reporter,
   }
 );

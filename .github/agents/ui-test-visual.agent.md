@@ -50,13 +50,13 @@ This agent should normally handle:
 
 ## Discovery Gate
 
-Before generating tests, check whether usable discovery output already exists
-(Page Inventory, Route list, i18n variants, responsive targets).
+Before generating tests, check whether usable and fresh discovery output already exists
+(Page Inventory, Route list, i18n variants, responsive targets, Side-Effect / Timer Inventory).
 
 | Situation | Action |
 |-----------|--------|
-| Discovery output exists and covers target pages | Reuse it directly |
-| Discovery output exists but is incomplete for the target | Invoke `ui-test-discovery` with a focused deep-dive request |
+| Discovery output exists, `git-commit` matches current `src/`, and covers target pages | Reuse it directly |
+| Discovery output exists but target pages/styles changed or variants are incomplete | Invoke `ui-test-discovery` with a focused incremental deep-dive request |
 | No discovery output at all | Inform the user that discovery is needed and invoke `ui-test-discovery` |
 
 Never silently re-discover what `ui-test-discovery` already produced.
@@ -73,25 +73,26 @@ This agent validates that the required config exists but never generates it.
 
 ## Screenshot Stabilization
 
-Before taking screenshots, apply these stabilization measures:
+Before taking screenshots, apply these deterministic stabilization measures:
 
-1. Wait for `networkidle` load state.
-2. If the page has CSS animations/transitions, inject `* { animation: none !important; transition: none !important; }`.
-3. If the Side-Effect Inventory flags dialogs on a page, register `page.on('dialog', d => d.dismiss())` before navigating.
-4. If lazy-loaded images exist, scroll to trigger loads then scroll back before capture.
+1. Isolate client storage (`localStorage.clear()`) and freeze auto-advancing intervals (`window.setInterval`) via `page.addInitScript` when pages include carousels or timers.
+2. Wait for `networkidle` load state and `document.fonts.ready` so web fonts do not cause layout shift.
+3. Inject CSS to disable animations, transitions, and blinking carets (`animation-duration: 0s !important; transition-duration: 0s !important; caret-color: transparent !important;`).
+4. If the Side-Effect Inventory flags dialogs on a page, register `page.on('dialog', d => d.dismiss())` before navigating.
+5. Scroll through the page to trigger lazy-loaded images, scroll back to top, and verify `img.complete` for all visible images before capture.
 
-The `playwright-visual` skill should provide stabilization helpers in `tests/fixtures/visual-helpers.ts`.
+The `playwright-visual` skill provides stabilization helpers in `tests/fixtures/visual-helpers.ts`.
 
-## Baseline Authority Strategy
+## Baseline Authority Strategy & Cross-OS Consistency
 
 | Strategy | When to Use | Baseline Location |
 |----------|-------------|-------------------|
-| **Local-only** (default) | Fast iteration, local-first team | `tests/visual/__screenshots__/` committed to git |
-| **Azure-only** | Cloud-authoritative team, CI consistency | Generated on Azure, stored as CI artifacts |
-| **Hybrid** | Local for dev, Azure for CI gating | Local baselines for dev; Azure baselines for PR merge gates |
+| **Local-only** (default) | Fast iteration, local-first team | `tests/visual/{spec}.spec.ts-snapshots/` committed to git |
+| **Azure-only** | Cloud-authoritative team, CI consistency | Generated on Azure Linux browsers (`*-linux.png`) or CI artifacts |
+| **Hybrid** | Local for dev, Azure for PR gating | Local `*-darwin.png` for dev; Linux `*-linux.png` (or unified `snapshotPathTemplate`) for CI merge gates |
 
 Default to **Local-only** unless the user explicitly requests Azure or CI authority.
-When in doubt, ask the user which strategy to adopt.
+**Cross-OS Warning:** Playwright appends the OS platform suffix (`-darwin`, `-linux`, `-win32`) to snapshot filenames by default. If local snapshots are `*-darwin.png` and CI runs on Linux, flag this mismatch and escalate to `ui-test-governance` when the user needs CI visual gating.
 
 ## Escalation Rules
 
