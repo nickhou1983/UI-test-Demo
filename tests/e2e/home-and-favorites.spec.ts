@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from '../fixtures/e2e-test';
 
 test.describe('Home and favorites flows', () => {
   test('opens a destination detail page from the home grid', async ({ page }) => {

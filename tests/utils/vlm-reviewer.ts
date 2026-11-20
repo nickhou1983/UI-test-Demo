@@ -1,4 +1,4 @@
-import { readFileSync } from 'fs';
+import { existsSync, readFileSync } from 'fs';
 import { DefaultAzureCredential, getBearerTokenProvider } from '@azure/identity';
 import { AzureOpenAI } from 'openai';
 import { VLM_SYSTEM_PROMPT, buildUserPrompt, type VlmPromptContext } from './vlm-prompts';
@@ -23,15 +23,17 @@ export interface VlmReviewResult {
 }
 
 export interface VlmReviewOptions extends VlmPromptContext {
+  diffPath?: string;
   endpoint?: string;
   apiKey?: string;
   deploymentName?: string;
   apiVersion?: string;
   maxTokens?: number;
+  maxRetries?: number;
 }
 
 let vlmCallCount = 0;
-const VLM_MAX_CALLS = Number(process.env.VLM_MAX_CALLS) || 10;
+const VLM_MAX_CALLS = Number(process.env.VLM_MAX_CALLS) || 20;
 
 export function getVlmCallCount(): number {
   return vlmCallCount;
@@ -98,40 +100,92 @@ function parseVlmResponse(content: string): VlmReviewResult {
   };
 }
 
+function isTransientVlmError(error: unknown): boolean {
+  if (!(error instanceof Error)) return false;
+  const status = (error as { status?: number }).status;
+  if (status === 429 || (typeof status === 'number' && status >= 500)) {
+    return true;
+  }
+  return /429|rate limit|timeout|timed out|ECONNRESET|ETIMEDOUT|502|503|504/i.test(
+    error.message,
+  );
+}
+
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
 export async function reviewVisualDiff(
   baselinePath: string,
   actualPath: string,
   options: VlmReviewOptions,
+  diffPath?: string,
 ): Promise<VlmReviewResult> {
   if (vlmCallCount >= VLM_MAX_CALLS) {
     throw new Error(`VLM call limit reached (${VLM_MAX_CALLS}).`);
   }
   vlmCallCount += 1;
 
-  const client = createAzureClient(options);
-  const response = await client.chat.completions.create({
-    model: options.deploymentName || process.env.AZURE_OPENAI_DEPLOYMENT || 'gpt-4o',
-    max_completion_tokens: options.maxTokens || 1024,
-    temperature: 0.1,
-    messages: [
-      { role: 'system', content: VLM_SYSTEM_PROMPT },
-      {
-        role: 'user',
-        content: [
-          { type: 'text', text: buildUserPrompt(options) },
-          { type: 'image_url', image_url: { url: imageToBase64DataUrl(baselinePath), detail: 'high' } },
-          { type: 'image_url', image_url: { url: imageToBase64DataUrl(actualPath), detail: 'high' } },
-        ],
-      },
-    ],
-  });
+  const resolvedDiffPath = diffPath ?? options.diffPath;
+  const hasDiffImage = Boolean(resolvedDiffPath && existsSync(resolvedDiffPath));
 
-  const content = response.choices[0]?.message?.content;
-  if (!content) {
-    throw new Error('Azure OpenAI returned an empty response.');
+  const userContent: Array<
+    | { type: 'text'; text: string }
+    | { type: 'image_url'; image_url: { url: string; detail: 'high' } }
+  > = [
+    { type: 'text', text: buildUserPrompt({ ...options, hasDiffImage }) },
+    {
+      type: 'image_url',
+      image_url: { url: imageToBase64DataUrl(baselinePath), detail: 'high' },
+    },
+    {
+      type: 'image_url',
+      image_url: { url: imageToBase64DataUrl(actualPath), detail: 'high' },
+    },
+  ];
+
+  if (hasDiffImage && resolvedDiffPath) {
+    userContent.push({
+      type: 'image_url',
+      image_url: { url: imageToBase64DataUrl(resolvedDiffPath), detail: 'high' },
+    });
   }
 
-  return parseVlmResponse(content);
+  const client = createAzureClient(options);
+  const maxRetries = options.maxRetries ?? 2;
+  let lastError: unknown;
+
+  for (let attempt = 0; attempt <= maxRetries; attempt += 1) {
+    try {
+      const response = await client.chat.completions.create({
+        model:
+          options.deploymentName || process.env.AZURE_OPENAI_DEPLOYMENT || 'gpt-4o',
+        max_completion_tokens: options.maxTokens || 1024,
+        temperature: 0.1,
+        messages: [
+          { role: 'system', content: VLM_SYSTEM_PROMPT },
+          { role: 'user', content: userContent },
+        ],
+      });
+
+      const content = response.choices[0]?.message?.content;
+      if (!content) {
+        throw new Error('Azure OpenAI returned an empty response.');
+      }
+
+      return parseVlmResponse(content);
+    } catch (error) {
+      lastError = error;
+      if (attempt < maxRetries && isTransientVlmError(error)) {
+        const backoffMs = 500 * 2 ** attempt;
+        await sleep(backoffMs);
+        continue;
+      }
+      throw error;
+    }
+  }
+
+  throw lastError;
 }
 
 export function isVlmEnabled(): boolean {

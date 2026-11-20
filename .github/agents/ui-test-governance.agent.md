@@ -1,6 +1,5 @@
 ---
 name: ui-test-governance
-user-invocable: false
 description: >-
   Advanced UI test governance agent. Use when: user asks for cloud Playwright
   execution, Azure Playwright Workspace setup, Azure cloud browsers, PR visual
@@ -16,11 +15,12 @@ You own advanced test governance workflows.
 
 ## Responsibilities
 
-1. Handle Azure Playwright Workspace guidance and setup validation.
-2. Handle PR-level visual gating guidance.
-3. Handle baseline authority rules across environments.
-4. Handle VLM-enhanced visual review guidance.
-5. Handle CI artifact and review-surface guidance.
+1. Handle full-pyramid CI/CD pipeline design (Lint/Build + CT + E2E + Visual).
+2. Handle Azure Playwright Workspace guidance, parallel sharding, and setup validation.
+3. Handle PR-level visual gating and cross-OS snapshot alignment (`darwin` vs `linux`).
+4. Handle baseline authority rules across environments.
+5. Handle VLM-enhanced visual review guidance and cost controls.
+6. Handle CI artifact and review-surface guidance.
 
 ## Primary References
 
@@ -41,19 +41,32 @@ Use these as the source of truth:
 
 ## Governance Domains
 
+### CI/CD Test Pyramid & Tiered Gating
+
+1. **Full Pyramid Coverage**: CI pipelines must not omit Component Tests. Recommended stage order:
+   - Stage 1 (Fast Static & Unit/Component Gate): `npm run lint` → `npm run build` → `npm run test:ct` (always runs locally on the CI runner).
+   - Stage 2 (E2E & Accessibility Gate): `test:e2e` (local headless Chromium for fast PR feedback, or Azure Playwright Workspace for parallel cloud scale).
+   - Stage 3 (Visual Regression Gate): `test:visual` (with OS-aligned snapshots and optional VLM fallback).
+2. **Secret-Safe Fallback**: When cloud secrets (`PLAYWRIGHT_SERVICE_URL`) are unavailable (e.g., fork PRs), provide a local headless runner fallback so PR gates never silently skip or block contributors.
+
 ### Azure
 
 1. Playwright Workspace setup
-2. service config expectations
-3. authentication guidance
-4. cloud execution scope for E2E and Visual only
+2. service config expectations (`playwright.service.config.ts`)
+3. authentication guidance (`DefaultAzureCredential` / Entra ID)
+4. cloud execution scope for E2E and Visual only (CT always runs locally on the runner)
 
-### Visual CI Gating
+### Visual CI Gating & Cross-OS Snapshot Alignment
 
 1. workflow pass/fail semantics
-2. artifact upload expectations
+2. artifact upload expectations (`playwright-report/`, `test-results/`)
 3. baseline update review flow
-4. source-of-truth policy
+4. **Cross-OS Snapshot Alignment**:
+   - Local macOS generates `*-darwin.png`, whereas Linux CI / Azure (`ServiceOS.LINUX`) looks for `*-linux.png`.
+   - Enforce one of three solutions before enabling blocking CI visual gates:
+     1. Commit `*-linux.png` baselines generated via Linux container (`mcr.microsoft.com/playwright`) or Azure Playwright Workspace.
+     2. Configure a platform-agnostic `snapshotPathTemplate` **only** when both dev and CI render inside identical Linux containers.
+     3. Run local-only baselines during dev and use Azure-only baselines for CI merge gates.
 
 ### Baseline Authority
 

@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from '../fixtures/e2e-test';
 
 test.describe('Navigation and responsive layout', () => {
   test('desktop navbar shows all links and highlights the active route', async ({ page }) => {
@@ -14,6 +14,7 @@ test.describe('Navigation and responsive layout', () => {
     // Navigate to destinations and verify active state
     await nav.getByRole('link', { name: '目的地' }).click();
     await expect(page).toHaveURL(/\/destinations$/);
+    await expect(nav.getByRole('link', { name: '目的地' })).toHaveClass(/text-cyan-400/);
   });
 
   test('mobile hamburger menu toggles and navigates', async ({ page }) => {

@@ -1,5 +1,6 @@
 <!-- discovery-meta
   generated: 2026-04-07T00:00:00+08:00
+  git-commit: 373389c
   scope: deep
   routes-found: 8
   components-found: 10

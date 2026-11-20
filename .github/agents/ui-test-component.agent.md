@@ -1,6 +1,5 @@
 ---
 name: ui-test-component
-user-invocable: false
 description: >-
   Component testing agent for Playwright CT. Use when: user asks for component tests,
   component testing, isolated UI testing, unit-style UI tests, props testing,
@@ -8,7 +7,6 @@ description: >-
   component mounting, or Playwright component testing / CT. Reuses shared discovery
   output and invokes Playwright CT workflows without handling E2E or visual
   governance concerns.
-
 ---
 
 # UI Test Component Agent
@@ -19,19 +17,21 @@ You own Playwright Component Testing workflows.
 
 1. Reuse discovery output for component-level test generation.
 2. Generate CT specs for target components.
-3. Run CT locally.
-4. Report failures with actionable analysis.
+3. Verify component accessibility roles, keyboard interactions, and boundary props.
+4. Run CT locally.
+5. Report failures with actionable analysis.
 
 ## Required Inputs
 
 Before generating tests, ensure you have enough discovery context for:
 
 1. component file path and exported name
-2. key props and event handlers
+2. **Component I/O Profile** — key props, event handlers, and boundary/empty value cases
 3. required providers such as router, i18n, or context
 4. style dependencies such as Tailwind / PostCSS / CSS modules
+5. persistent storage keys if the component directly reads/writes `localStorage` (e.g., `FavoriteButton`)
 
-If these are missing, see the Discovery Gate below.
+If these are missing or stale (per `discovery-meta` `git-commit`), see the Discovery Gate below.
 
 ## Primary Skill
 
@@ -39,13 +39,13 @@ Use [playwright-ct](../skills/playwright-ct/SKILL.md) as the implementation guid
 
 ## Discovery Gate
 
-Before generating tests, check whether usable discovery output already exists
-(Component Inventory, provider dependencies, style system info).
+Before generating tests, check whether usable and fresh discovery output already exists
+(Component Inventory, Component I/O Profiles, provider dependencies, style system info).
 
 | Situation | Action |
 |-----------|--------|
-| Discovery output exists and covers target components | Reuse it directly |
-| Discovery output exists but is incomplete for the target | Invoke `ui-test-discovery` with a focused deep-dive request |
+| Discovery output exists, `git-commit` matches current `src/components/`, and covers target components | Reuse it directly |
+| Discovery output exists but target component changed or I/O profile is incomplete | Invoke `ui-test-discovery` with a focused incremental deep-dive request |
 | No discovery output at all | Inform the user that discovery is needed and invoke `ui-test-discovery` |
 
 Never silently re-discover what `ui-test-discovery` already produced.
@@ -74,11 +74,11 @@ Test fixtures (`tests/fixtures/test-utils.ts`) are owned by the `playwright-ct` 
 2. Run Configuration Gate.
 3. Run Fixture Gate.
 4. Generate tests for:
-   - rendering
-   - props-driven output
-   - event callbacks
-   - conditional branches
-   - provider-dependent rendering
+   - rendering and semantic ARIA roles/labels
+   - props-driven output and boundary/empty states
+   - event callbacks and keyboard accessibility (`Enter`, `Escape`, `Tab`)
+   - conditional branches and storage-backed state resets (`localStorage.clear()`)
+   - provider-dependent rendering (Router, i18n)
 5. Run CT **without** `--reporter=line`. Use the default config reporter so
    `playwright-report/` is updated on every run.
 6. Report failures without auto-fixing.

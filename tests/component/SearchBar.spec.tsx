@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import { test, expect } from '@playwright/experimental-ct-react';
 import SearchBar from '../../src/components/SearchBar';
 

@@ -1,5 +1,5 @@
 import { dirname, extname, join } from 'path';
-import { existsSync, readFileSync, writeFileSync } from 'fs';
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'fs';
 import type {
   FullConfig,
   FullResult,
@@ -26,6 +26,7 @@ export default class VlmHtmlReporter implements Reporter {
   private inlineImages = process.env.VLM_REPORT_INLINE === 'true';
 
   onBegin(config: FullConfig, _suite: Suite): void {
+    void _suite;
     this.outputDir = config.configFile ? dirname(config.configFile) : config.rootDir;
   }
 
@@ -57,13 +58,21 @@ export default class VlmHtmlReporter implements Reporter {
   }
 
   onEnd(_result: FullResult): void {
+    void _result;
     if (this.entries.length === 0) {
       return;
     }
 
+    const html = this.buildHtml();
     const reportPath = join(this.outputDir, 'vlm-visual-report.html');
-    writeFileSync(reportPath, this.buildHtml(), 'utf-8');
-    console.log(`[VLM HTML Reporter] Report written to: ${reportPath}`);
+    writeFileSync(reportPath, html, 'utf-8');
+
+    const testResultsDir = join(this.outputDir, 'test-results');
+    mkdirSync(testResultsDir, { recursive: true });
+    const artifactReportPath = join(testResultsDir, 'vlm-report.html');
+    writeFileSync(artifactReportPath, html, 'utf-8');
+
+    console.log(`[VLM HTML Reporter] Report written to: ${reportPath} and ${artifactReportPath}`);
   }
 
   private buildHtml(): string {

@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from '../fixtures/e2e-test';
 
 test.describe('Destinations and language flows', () => {
   test('filters destinations by region and type', async ({ page }) => {

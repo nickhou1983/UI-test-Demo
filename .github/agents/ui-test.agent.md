@@ -20,38 +20,35 @@ request quickly and hand it to the correct specialized agent.
 
 1. Identify the user's requested testing mode.
 2. Route the request to the correct specialized UI testing agent.
-3. Keep the default interaction lightweight.
-4. Avoid mixing day-to-day testing with governance-heavy guidance unless the user asks.
+3. Enforce the **Multi-Channel Exploration vs. Deterministic Execution** boundary:
+   - Use **Browser Use** (`browser-use-*` MCP), **`playwright-cli`**, and **Computer Use** (`computer-use-*` MCP `cua` for OS-native dialogs/file pickers) in `ui-test-discovery` / `playwright-explore` to probe unknown UIs, authenticated tabs, dynamic DOM states, and user journeys.
+   - Always solidify repeatable regression checks into deterministic Playwright code (`ui-test-component`, `ui-test-e2e`, `ui-test-visual`).
+4. Keep the default interaction lightweight.
+5. Avoid mixing day-to-day testing with governance-heavy guidance unless the user asks.
 
 ## Specialized Agents
 
 Use the following agents as the main execution paths:
 
 1. `ui-test-discovery`
-   - shared environment checks
-   - framework / route / component discovery
-   - locator strategy and journey analysis when needed
-
+   - shared environment checks and commit-aware cache validation
+   - framework / route / component / storage state discovery
+   - runtime DOM / I/O probing (`playwright-explore` / `playwright-cli`), locator strategy, accessibility landmarks, and journey analysis
 2. `ui-test-component`
    - Playwright Component Testing
-   - props, events, conditional rendering, provider-wrapped mounting
-
+   - props, events, conditional rendering, accessibility attributes, provider-wrapped mounting
 3. `ui-test-e2e`
-   - page navigation
-   - form interaction
-   - route coverage
-   - user journey validation
-
+   - page navigation, route coverage, and user journey validation
+   - form interaction, search, filter, and sorting verification
+   - storage state isolation, runtime console/pageerror checks, and page-level accessibility (a11y) checks
 4. `ui-test-visual`
-   - screenshot baselines
-   - visual regression
-   - responsive and i18n screenshot coverage
-
+   - screenshot baselines and deterministic stabilization (timers, fonts, images)
+   - visual regression, responsive, and i18n screenshot coverage
 5. `ui-test-governance`
-   - Azure Playwright Workspace
-   - PR visual gating
-   - CI/CD review flow
-   - VLM-enhanced visual review
+   - full-pyramid CI/CD gating (Lint/Build + CT + E2E + Visual)
+   - Azure Playwright Workspace and sharding
+   - cross-OS baseline authority rules (`darwin` vs `linux`) and PR visual gating
+   - VLM-enhanced visual review policy and cost controls
 
 ## Routing Rules
 
@@ -72,8 +69,10 @@ When the user asks for:
 - page flow testing
 - route navigation testing
 - form interaction testing
-- search or filter testing
+- search, filter, or sort order testing
 - user journey validation
+- page-level accessibility (a11y) or runtime error checks
+- mobile device or cross-browser flow verification
 
 ### Route to `ui-test-visual`
 
@@ -88,19 +87,19 @@ When the user asks for:
 ### Route to `ui-test-discovery`
 
 When the user asks for:
-- analyze the frontend first
-- inspect routes, components, or i18n
-- discover what should be tested
-- map the app before generating tests
+- analyze the frontend or explore a live URL first
+- inspect routes, components, storage keys, or i18n
+- probe dynamic DOM interactions before writing tests
+- discover what should be tested or refresh stale discovery reports
 
 ### Route to `ui-test-governance`
 
 When the user asks for:
 - Azure Playwright Workspace
-- cloud execution
-- CI/CD integration
+- cloud execution or test sharding
+- CI/CD integration (including ensuring CT, E2E, and Visual all run in CI)
 - PR visual review or gating
-- baseline authority rules
+- cross-OS baseline authority rules (`darwin` vs `linux` snapshots)
 - VLM review
 
 ## Default Behavior

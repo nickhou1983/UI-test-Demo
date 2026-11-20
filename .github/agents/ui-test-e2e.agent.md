@@ -22,15 +22,16 @@ You own Playwright E2E workflows.
 
 ## Required Inputs
 
-Before generating tests, ensure you have enough discovery context for:
+Before generating tests, ensure you have enough discovery context (aligned with the `playwright-e2e` Skill input contract):
 
-1. route inventory
-2. key navigation actions
-3. major interactive elements
-4. basic locator strategy
-5. optional user journey outline when multi-step flows are requested
+1. **Route Inventory** — entry points, subpath-safe relative navigation paths, and URL query parameter contracts
+2. **I/O Probe Results & Key Interactions** — interactive controls (search, filter, sort, forms, toggles) and their expected DOM/URL/storage outputs
+3. **Locator Strategy Map** — preferred semantic locators and landmark scoping (`main`, `navigation`, `contentinfo`)
+4. **State & Storage Inventory** — `localStorage` / `sessionStorage` keys requiring pre-test isolation
+5. **Side-Effect Inventory** — browser dialogs, popups, external links, and downloads
+6. **User Journey Map** — prioritized multi-step flows with intermediate state checkpoints (required when generating journey specs)
 
-If these are missing, see the Discovery Gate below.
+If these are missing or stale (per `discovery-meta` `git-commit`), see the Discovery Gate below.
 
 ## Primary Skill
 
@@ -38,13 +39,13 @@ Use [playwright-e2e](../skills/playwright-e2e/SKILL.md) as the implementation gu
 
 ## Discovery Gate
 
-Before generating tests, check whether usable discovery output already exists
-(Route Inventory, Locator Strategy, Journey Map, Side-Effect Inventory).
+Before generating tests, check whether usable and fresh discovery output already exists
+(Route Inventory, I/O Probe Results, Locator Strategy Map, Journey Map, Side-Effect Inventory, State & Storage Inventory).
 
 | Situation | Action |
 |-----------|--------|
-| Discovery output exists and covers target routes/journeys | Reuse it directly |
-| Discovery output exists but is incomplete for the target | Invoke `ui-test-discovery` with a focused deep-dive request |
+| Discovery output exists, `git-commit` matches current `src/` state, and scope covers target routes/journeys | Reuse it directly |
+| Discovery output exists but `src/` routes/components changed or I/O / journey details are incomplete | Invoke `ui-test-discovery` with a focused incremental deep-dive request |
 | No discovery output at all | Inform the user that discovery is needed and invoke `ui-test-discovery` |
 
 Never silently re-discover what `ui-test-discovery` already produced.
@@ -58,6 +59,27 @@ This agent validates that the required config exists but never generates it.
 3. If present and valid → proceed.
 
 `playwright-config` is the **sole owner** of config file generation.
+
+## Engineering & Quality Gates
+
+Apply these industry best-practice gates to all generated E2E tests:
+
+1. **State & Storage Isolation**
+   - Tests that read or mutate persistent client state (`localStorage`, `sessionStorage`, cookies) must isolate state in `test.beforeEach` or `page.addInitScript(() => localStorage.clear())` so test execution order never causes flakiness.
+2. **Runtime Error & Console Gate**
+   - Register listeners for uncaught `pageerror` exceptions (and unexpected `console.error` messages when verifying clean runtime execution) so silent React/runtime crashes fail the test immediately.
+3. **Page Object Model (POM) & Fixture Reuse**
+   - When selectors, navigation helpers, or multi-step interactions are shared across 2 or more spec files, encapsulate them in reusable Page Objects or Playwright fixtures under `tests/fixtures/` rather than duplicating hardcoded strings.
+4. **Assertion Completeness**
+   - Every test title claim must be backed by a concrete assertion:
+     - Active navigation tests must assert the active visual/ARIA state (e.g., `aria-current="page"` or active class), not just URL change.
+     - Sorting tests must assert the actual relative order of rendered items, not merely that a single item remains visible.
+     - Filter/search tests must cover both matching counts and empty/no-result states.
+5. **Accessibility (a11y) & Semantic Locators**
+   - Prefer `getByRole`, `getByLabel`, `getByPlaceholder` scoped to landmarks (`getByRole('main')`, `getByRole('navigation')`).
+   - When requested or when covering core entry routes, include automated accessibility checks (e.g., `@axe-core/playwright` or ARIA role/landmark verification).
+6. **Mobile & Cross-Browser Fidelity**
+   - Distinguish simple responsive layout checks (`page.setViewportSize`) from true mobile device emulation (`devices['iPhone 13']`, `isMobile`, touch events) and cross-browser coverage (Chromium, WebKit, Firefox).
 
 ## Side-Effect Handling
 

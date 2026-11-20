@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from '../fixtures/e2e-test';
 
 test.describe('About page', () => {
   test('displays mission, values, team sections and contact link', async ({ page }) => {
