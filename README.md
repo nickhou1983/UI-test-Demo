@@ -8,7 +8,7 @@
 
 | 项目 | 说明 |
 | --- | --- |
-| 线上地址 | <https://nickhou1983.github.io/UI-test-Demo/> |
+| 线上地址 | 应用 Demo：<https://nickhou1983.github.io/UI-test-Demo/> · 方案演示 Deck：<https://nickhou1983.github.io/UI-test-Demo/presentations/> |
 | 技术栈 | React 19 · TypeScript 5.9 · Vite 8 · Tailwind CSS 4 · react-i18next |
 | 测试架构 | **7 Agents × 9 Skills**（Playwright CT / E2E / Visual + GPT-4o VLM + Azure Cloud） |
 | 探索通道 | **Static AST** + **Browser Use MCP** + **playwright-cli** + **Computer Use MCP** |

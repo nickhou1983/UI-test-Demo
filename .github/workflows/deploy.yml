@@ -3,6 +3,7 @@ name: Deploy to GitHub Pages
 on:
   push:
     branches: [main]
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -24,6 +25,12 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm run build
+      - name: Bundle HTML presentation and architecture diagrams into Pages artifact
+        run: |
+          mkdir -p dist/presentations dist/docs/presentations
+          cp docs/presentations/ui-test-solution-v3.html dist/presentations/index.html
+          cp docs/presentations/ui-test-solution-v3.html dist/presentations/ui-test-solution-v3.html
+          cp docs/presentations/*.html docs/presentations/*.svg docs/presentations/*.png dist/docs/presentations/
       - uses: actions/upload-pages-artifact@v3
         with:
           path: dist
