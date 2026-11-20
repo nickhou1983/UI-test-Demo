@@ -80,17 +80,27 @@ jobs:
           tenant-id: ${{ env.AZURE_TENANT_ID }}
           subscription-id: ${{ env.AZURE_SUBSCRIPTION_ID }}
 
-      - name: Install local Chromium (when Azure Workspace is not configured)
-        if: ${{ env.PLAYWRIGHT_SERVICE_URL == '' }}
-        run: npx playwright install --with-deps chromium
-
-      - name: Run E2E tests on Azure Playwright Workspace
-        if: ${{ env.PLAYWRIGHT_SERVICE_URL != '' }}
-        run: npx playwright test --config=playwright.service.config.ts --project=e2e
-
-      - name: Run E2E tests on local headless Chromium (Fork / No-Secret Fallback)
-        if: ${{ env.PLAYWRIGHT_SERVICE_URL == '' }}
-        run: npm run test:e2e
+      - name: Run E2E tests (Azure Playwright Workspace with Local Fallback)
+        run: |
+          if [ -n "${PLAYWRIGHT_SERVICE_URL:-}" ]; then
+            set +e
+            npx playwright test --config=playwright.service.config.ts --project=e2e 2>&1 | tee azure-e2e.log
+            AZURE_EXIT=${PIPESTATUS[0]}
+            set -e
+            if [ "${AZURE_EXIT}" -eq 0 ]; then
+              exit 0
+            fi
+            if grep -qE "Could not authenticate|browserType\.connect|Test run creation failed" azure-e2e.log; then
+              echo "::warning::Azure Playwright Workspace connection/auth unavailable; falling back to local headless Chromium so E2E gate still runs."
+              npx playwright install --with-deps chromium
+              npm run test:e2e
+            else
+              exit "${AZURE_EXIT}"
+            fi
+          else
+            npx playwright install --with-deps chromium
+            npm run test:e2e
+          fi
 
       - name: Upload E2E report
         uses: actions/upload-artifact@v4

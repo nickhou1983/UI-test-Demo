@@ -14,6 +14,13 @@ if (process.env.VLM_REVIEW === 'true') {
   reporter.push(['./tests/utils/vlm-html-reporter.ts']);
 }
 
+if (process.env.PLAYWRIGHT_SERVICE_URL?.startsWith('https://')) {
+  process.env.PLAYWRIGHT_SERVICE_URL = process.env.PLAYWRIGHT_SERVICE_URL.replace(
+    /^https:\/\//i,
+    'wss://',
+  );
+}
+
 const useAccessToken = Boolean(
   process.env.PLAYWRIGHT_SERVICE_ACCESS_TOKEN && !process.env.AZURE_CLIENT_ID,
 );
